@@ -1,6 +1,6 @@
 import "server-only";
 
-import { worlds as mockWorldSummaries } from "@/lib/mock-data";
+import { getWorldState, worlds as mockWorldSummaries } from "@/lib/mock-data";
 import type {
   BoardSite,
   BuildingEntry,
@@ -544,6 +544,22 @@ export async function listWorldSummaries(): Promise<WorldSummary[]> {
 }
 
 export async function getWorldPayload(worldRouteId: string): Promise<WorldPayload> {
+  if (!isSupabaseConfigured()) {
+    const world = getWorldState(worldRouteId);
+    return {
+      world,
+      runtimeState: {
+        started: world.day > 0,
+        realTimeEnabled: false,
+        anchorDay: world.day,
+        anchorStartedAtMs: null,
+      },
+      isSandboxWorld: worldRouteId === "world-test",
+      routeWorldId: worldRouteId,
+      worldPlayerId: null,
+    };
+  }
+
   const worldRecord = await fetchWorldRecord(worldRouteId);
   const runtime = computeRuntime(worldRecord);
   const worldPlayers = await fetchWorldPlayers(worldRecord.id);
