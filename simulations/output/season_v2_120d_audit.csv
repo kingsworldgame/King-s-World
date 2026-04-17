@@ -1,0 +1,10 @@
+type,branch,hero,label,players,users,portalRatePct,day90EligibleRatePct,reached2500RatePct,avgInfluenceD90,avgInfluenceD120,avgEtaHours,avgVillagesLostToHorde,trailDeathRatePct,adoptionRatePct,avgHireDay,portalRateUsersPct,portalRateNonUsersPct,portalDeltaPp,avgEtaUsers,avgInfluenceD120Users
+branch,urban,,,236,,19.49,52.54,0,1482.16,1270.88,116.45,2.79,18.22,,,,,,,
+branch,tactical,,,242,,38.84,56.2,0,1527.79,1409.06,119.06,2.67,11.98,,,,,,,
+branch,defensive,,,261,,33.72,16.09,0,1255.85,1347.57,124.33,1.77,15.33,,,,,,,
+branch,flow,,,261,,26.82,46.36,0,1464.67,1284.02,54.1,2.65,10.34,,,,,,,
+hero,,engineer,Engenheiro,,602,,,,,,,,,60.2,33.02,37.38,18.34,19.03,105.64,1428.54
+hero,,marshal,Marechal,,481,,,,,,,,,48.1,41.65,41.58,18.88,22.7,113.31,1454.36
+hero,,navigator,Navegador,,589,,,,,,,,,58.9,66.08,32.09,26.52,5.57,76.99,1338.73
+hero,,intendente,Intendente,,509,,,,,,,,,50.9,43.63,36.74,22.61,14.13,92.11,1429.19
+hero,,erudite,Erudito,,431,,,,,,,,,43.1,39.29,37.12,24.25,12.87,107.41,1416.94

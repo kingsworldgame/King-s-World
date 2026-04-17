@@ -1,0 +1,6 @@
+day,avgPlayersAlive,avgEligiblePortal,avgInfluence,avgBuildingInfluence,avgMilitaryInfluence,avgCouncilInfluence,avgQuestInfluence,avgWonderInfluence,avgTribeInfluence,avgTroops,avgVillages
+15,38.88,0,141.79,87.98,53.81,0,0,0,0,401.92,1.67
+30,38.88,0,385.47,209.51,107.58,13.88,54.5,0,0,642.68,3.22
+60,38.88,0.38,1001.66,495.21,215.07,131.63,110.5,49.25,0,1124.44,5.56
+90,38.88,23.5,1483.54,783.89,322.65,160.75,167,49.25,0,1606.18,7.89
+120,38.88,20.63,1415.57,565.5,324.2,161.75,167,64.63,132.5,796.15,5.66

@@ -1,0 +1,1130 @@
+{
+  "generatedAt": "2026-03-10T00:20:11.078Z",
+  "rows": [
+    {
+      "raidLootMult": 0.6,
+      "battleLossMult": 0.7,
+      "players": 1000,
+      "day90EligiblePct": 44.8,
+      "alive1500Pct": 40.6,
+      "cityLossPct": 88.2,
+      "avgCitiesLost": 2.02,
+      "marchDeathPct": 20.4,
+      "etaLatePct": 6.3,
+      "interceptedPct": 14.1,
+      "portalPct": 40.6,
+      "avgInfluenceD120": 1450.17,
+      "avgTroopsAlive": 725.79,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 257,
+          "portalPct": 40.47,
+          "alive1500Pct": 40.47,
+          "avgCityLoss": 2.03,
+          "avgInfluenceD120": 1471.79
+        },
+        "posto": {
+          "players": 229,
+          "portalPct": 48.47,
+          "alive1500Pct": 48.47,
+          "avgCityLoss": 2.11,
+          "avgInfluenceD120": 1510.88
+        },
+        "bastiao": {
+          "players": 257,
+          "portalPct": 36.58,
+          "alive1500Pct": 36.58,
+          "avgCityLoss": 1.65,
+          "avgInfluenceD120": 1434.14
+        },
+        "celeiro": {
+          "players": 257,
+          "portalPct": 37.74,
+          "alive1500Pct": 37.74,
+          "avgCityLoss": 2.3,
+          "avgInfluenceD120": 1390.5
+        }
+      }
+    },
+    {
+      "raidLootMult": 0.6,
+      "battleLossMult": 0.85,
+      "players": 1000,
+      "day90EligiblePct": 44.8,
+      "alive1500Pct": 35.9,
+      "cityLossPct": 93.5,
+      "avgCitiesLost": 2.51,
+      "marchDeathPct": 21.6,
+      "etaLatePct": 6.3,
+      "interceptedPct": 15.3,
+      "portalPct": 35.9,
+      "avgInfluenceD120": 1399.15,
+      "avgTroopsAlive": 761.92,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 257,
+          "portalPct": 35.02,
+          "alive1500Pct": 35.02,
+          "avgCityLoss": 2.61,
+          "avgInfluenceD120": 1414.33
+        },
+        "posto": {
+          "players": 229,
+          "portalPct": 44.54,
+          "alive1500Pct": 44.54,
+          "avgCityLoss": 2.57,
+          "avgInfluenceD120": 1464.32
+        },
+        "bastiao": {
+          "players": 257,
+          "portalPct": 32.68,
+          "alive1500Pct": 32.68,
+          "avgCityLoss": 2.06,
+          "avgInfluenceD120": 1387.1
+        },
+        "celeiro": {
+          "players": 257,
+          "portalPct": 32.3,
+          "alive1500Pct": 32.3,
+          "avgCityLoss": 2.8,
+          "avgInfluenceD120": 1337.94
+        }
+      }
+    },
+    {
+      "raidLootMult": 0.6,
+      "battleLossMult": 1,
+      "players": 1000,
+      "day90EligiblePct": 44.9,
+      "alive1500Pct": 32.4,
+      "cityLossPct": 96.6,
+      "avgCitiesLost": 3.04,
+      "marchDeathPct": 20.2,
+      "etaLatePct": 6.3,
+      "interceptedPct": 13.9,
+      "portalPct": 32.4,
+      "avgInfluenceD120": 1342.1,
+      "avgTroopsAlive": 798.78,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 257,
+          "portalPct": 31.91,
+          "alive1500Pct": 31.91,
+          "avgCityLoss": 3.15,
+          "avgInfluenceD120": 1357.42
+        },
+        "posto": {
+          "players": 229,
+          "portalPct": 40.61,
+          "alive1500Pct": 40.61,
+          "avgCityLoss": 3.14,
+          "avgInfluenceD120": 1400.57
+        },
+        "bastiao": {
+          "players": 257,
+          "portalPct": 30.35,
+          "alive1500Pct": 30.35,
+          "avgCityLoss": 2.54,
+          "avgInfluenceD120": 1334.89
+        },
+        "celeiro": {
+          "players": 257,
+          "portalPct": 27.63,
+          "alive1500Pct": 27.63,
+          "avgCityLoss": 3.32,
+          "avgInfluenceD120": 1281.89
+        }
+      }
+    },
+    {
+      "raidLootMult": 0.6,
+      "battleLossMult": 1.15,
+      "players": 1000,
+      "day90EligiblePct": 44.8,
+      "alive1500Pct": 30.2,
+      "cityLossPct": 98,
+      "avgCitiesLost": 3.53,
+      "marchDeathPct": 12.6,
+      "etaLatePct": 6.3,
+      "interceptedPct": 6.3,
+      "portalPct": 30.2,
+      "avgInfluenceD120": 1289.97,
+      "avgTroopsAlive": 836.07,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 257,
+          "portalPct": 29.57,
+          "alive1500Pct": 29.57,
+          "avgCityLoss": 3.74,
+          "avgInfluenceD120": 1296.37
+        },
+        "posto": {
+          "players": 229,
+          "portalPct": 38.43,
+          "alive1500Pct": 38.43,
+          "avgCityLoss": 3.65,
+          "avgInfluenceD120": 1347.74
+        },
+        "bastiao": {
+          "players": 257,
+          "portalPct": 28.79,
+          "alive1500Pct": 28.79,
+          "avgCityLoss": 2.94,
+          "avgInfluenceD120": 1285.84
+        },
+        "celeiro": {
+          "players": 257,
+          "portalPct": 24.9,
+          "alive1500Pct": 24.9,
+          "avgCityLoss": 3.79,
+          "avgInfluenceD120": 1236.24
+        }
+      }
+    },
+    {
+      "raidLootMult": 0.6,
+      "battleLossMult": 1.3,
+      "players": 1000,
+      "day90EligiblePct": 44.8,
+      "alive1500Pct": 25.4,
+      "cityLossPct": 98.7,
+      "avgCitiesLost": 3.97,
+      "marchDeathPct": 10.7,
+      "etaLatePct": 6.3,
+      "interceptedPct": 4.4,
+      "portalPct": 25.4,
+      "avgInfluenceD120": 1240.18,
+      "avgTroopsAlive": 873.49,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 257,
+          "portalPct": 24.9,
+          "alive1500Pct": 24.9,
+          "avgCityLoss": 4.17,
+          "avgInfluenceD120": 1247
+        },
+        "posto": {
+          "players": 229,
+          "portalPct": 33.19,
+          "alive1500Pct": 33.19,
+          "avgCityLoss": 4.12,
+          "avgInfluenceD120": 1289.53
+        },
+        "bastiao": {
+          "players": 257,
+          "portalPct": 23.74,
+          "alive1500Pct": 23.74,
+          "avgCityLoss": 3.35,
+          "avgInfluenceD120": 1244.56
+        },
+        "celeiro": {
+          "players": 257,
+          "portalPct": 20.62,
+          "alive1500Pct": 20.62,
+          "avgCityLoss": 4.25,
+          "avgInfluenceD120": 1185.02
+        }
+      }
+    },
+    {
+      "raidLootMult": 0.8,
+      "battleLossMult": 0.7,
+      "players": 1000,
+      "day90EligiblePct": 45.2,
+      "alive1500Pct": 41,
+      "cityLossPct": 88.1,
+      "avgCitiesLost": 2.01,
+      "marchDeathPct": 21.1,
+      "etaLatePct": 6.3,
+      "interceptedPct": 14.8,
+      "portalPct": 41,
+      "avgInfluenceD120": 1453.39,
+      "avgTroopsAlive": 725.97,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 257,
+          "portalPct": 40.47,
+          "alive1500Pct": 40.47,
+          "avgCityLoss": 2.02,
+          "avgInfluenceD120": 1470.93
+        },
+        "posto": {
+          "players": 229,
+          "portalPct": 49.34,
+          "alive1500Pct": 49.34,
+          "avgCityLoss": 2.1,
+          "avgInfluenceD120": 1514.34
+        },
+        "bastiao": {
+          "players": 257,
+          "portalPct": 35.41,
+          "alive1500Pct": 35.41,
+          "avgCityLoss": 1.64,
+          "avgInfluenceD120": 1435.51
+        },
+        "celeiro": {
+          "players": 257,
+          "portalPct": 39.69,
+          "alive1500Pct": 39.69,
+          "avgCityLoss": 2.28,
+          "avgInfluenceD120": 1399.4
+        }
+      }
+    },
+    {
+      "raidLootMult": 0.8,
+      "battleLossMult": 0.85,
+      "players": 1000,
+      "day90EligiblePct": 45.2,
+      "alive1500Pct": 35.5,
+      "cityLossPct": 93.5,
+      "avgCitiesLost": 2.5,
+      "marchDeathPct": 22.8,
+      "etaLatePct": 6.3,
+      "interceptedPct": 16.5,
+      "portalPct": 35.5,
+      "avgInfluenceD120": 1403.15,
+      "avgTroopsAlive": 762.1,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 257,
+          "portalPct": 34.24,
+          "alive1500Pct": 34.24,
+          "avgCityLoss": 2.6,
+          "avgInfluenceD120": 1417.79
+        },
+        "posto": {
+          "players": 229,
+          "portalPct": 44.98,
+          "alive1500Pct": 44.98,
+          "avgCityLoss": 2.56,
+          "avgInfluenceD120": 1466.03
+        },
+        "bastiao": {
+          "players": 257,
+          "portalPct": 30.74,
+          "alive1500Pct": 30.74,
+          "avgCityLoss": 2.05,
+          "avgInfluenceD120": 1393.91
+        },
+        "celeiro": {
+          "players": 257,
+          "portalPct": 33.07,
+          "alive1500Pct": 33.07,
+          "avgCityLoss": 2.79,
+          "avgInfluenceD120": 1341.71
+        }
+      }
+    },
+    {
+      "raidLootMult": 0.8,
+      "battleLossMult": 1,
+      "players": 1000,
+      "day90EligiblePct": 45.3,
+      "alive1500Pct": 32.3,
+      "cityLossPct": 96.6,
+      "avgCitiesLost": 3.03,
+      "marchDeathPct": 20.6,
+      "etaLatePct": 6.3,
+      "interceptedPct": 14.3,
+      "portalPct": 32.3,
+      "avgInfluenceD120": 1346.12,
+      "avgTroopsAlive": 798.96,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 257,
+          "portalPct": 30.74,
+          "alive1500Pct": 30.74,
+          "avgCityLoss": 3.14,
+          "avgInfluenceD120": 1362.08
+        },
+        "posto": {
+          "players": 229,
+          "portalPct": 39.3,
+          "alive1500Pct": 39.3,
+          "avgCityLoss": 3.14,
+          "avgInfluenceD120": 1400.14
+        },
+        "bastiao": {
+          "players": 257,
+          "portalPct": 30.74,
+          "alive1500Pct": 30.74,
+          "avgCityLoss": 2.53,
+          "avgInfluenceD120": 1342.59
+        },
+        "celeiro": {
+          "players": 257,
+          "portalPct": 29.18,
+          "alive1500Pct": 29.18,
+          "avgCityLoss": 3.31,
+          "avgInfluenceD120": 1285.53
+        }
+      }
+    },
+    {
+      "raidLootMult": 0.8,
+      "battleLossMult": 1.15,
+      "players": 1000,
+      "day90EligiblePct": 45.2,
+      "alive1500Pct": 30.7,
+      "cityLossPct": 98,
+      "avgCitiesLost": 3.52,
+      "marchDeathPct": 12.3,
+      "etaLatePct": 6.3,
+      "interceptedPct": 6,
+      "portalPct": 30.7,
+      "avgInfluenceD120": 1294.59,
+      "avgTroopsAlive": 836.26,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 257,
+          "portalPct": 30.35,
+          "alive1500Pct": 30.35,
+          "avgCityLoss": 3.73,
+          "avgInfluenceD120": 1299.01
+        },
+        "posto": {
+          "players": 229,
+          "portalPct": 37.99,
+          "alive1500Pct": 37.99,
+          "avgCityLoss": 3.64,
+          "avgInfluenceD120": 1353.79
+        },
+        "bastiao": {
+          "players": 257,
+          "portalPct": 30.35,
+          "alive1500Pct": 30.35,
+          "avgCityLoss": 2.93,
+          "avgInfluenceD120": 1293.43
+        },
+        "celeiro": {
+          "players": 257,
+          "portalPct": 24.9,
+          "alive1500Pct": 24.9,
+          "avgCityLoss": 3.79,
+          "avgInfluenceD120": 1238.57
+        }
+      }
+    },
+    {
+      "raidLootMult": 0.8,
+      "battleLossMult": 1.3,
+      "players": 1000,
+      "day90EligiblePct": 45.2,
+      "alive1500Pct": 25.8,
+      "cityLossPct": 98.7,
+      "avgCitiesLost": 3.96,
+      "marchDeathPct": 10,
+      "etaLatePct": 6.3,
+      "interceptedPct": 3.7,
+      "portalPct": 25.8,
+      "avgInfluenceD120": 1244.19,
+      "avgTroopsAlive": 873.67,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 257,
+          "portalPct": 26.07,
+          "alive1500Pct": 26.07,
+          "avgCityLoss": 4.17,
+          "avgInfluenceD120": 1253.5
+        },
+        "posto": {
+          "players": 229,
+          "portalPct": 32.75,
+          "alive1500Pct": 32.75,
+          "avgCityLoss": 4.11,
+          "avgInfluenceD120": 1291.2
+        },
+        "bastiao": {
+          "players": 257,
+          "portalPct": 24.51,
+          "alive1500Pct": 24.51,
+          "avgCityLoss": 3.34,
+          "avgInfluenceD120": 1249.84
+        },
+        "celeiro": {
+          "players": 257,
+          "portalPct": 20.62,
+          "alive1500Pct": 20.62,
+          "avgCityLoss": 4.24,
+          "avgInfluenceD120": 1187.34
+        }
+      }
+    },
+    {
+      "raidLootMult": 1,
+      "battleLossMult": 0.7,
+      "players": 1000,
+      "day90EligiblePct": 45.5,
+      "alive1500Pct": 41.8,
+      "cityLossPct": 88,
+      "avgCitiesLost": 2,
+      "marchDeathPct": 20.5,
+      "etaLatePct": 6.3,
+      "interceptedPct": 14.2,
+      "portalPct": 41.8,
+      "avgInfluenceD120": 1458.74,
+      "avgTroopsAlive": 727.36,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 257,
+          "portalPct": 39.69,
+          "alive1500Pct": 39.69,
+          "avgCityLoss": 2.02,
+          "avgInfluenceD120": 1475.42
+        },
+        "posto": {
+          "players": 228,
+          "portalPct": 49.56,
+          "alive1500Pct": 49.56,
+          "avgCityLoss": 2.09,
+          "avgInfluenceD120": 1519.25
+        },
+        "bastiao": {
+          "players": 256,
+          "portalPct": 37.11,
+          "alive1500Pct": 37.11,
+          "avgCityLoss": 1.63,
+          "avgInfluenceD120": 1445.47
+        },
+        "celeiro": {
+          "players": 259,
+          "portalPct": 41.7,
+          "alive1500Pct": 41.7,
+          "avgCityLoss": 2.26,
+          "avgInfluenceD120": 1402.04
+        }
+      }
+    },
+    {
+      "raidLootMult": 1,
+      "battleLossMult": 0.85,
+      "players": 1000,
+      "day90EligiblePct": 45.5,
+      "alive1500Pct": 36.9,
+      "cityLossPct": 93.5,
+      "avgCitiesLost": 2.49,
+      "marchDeathPct": 20.7,
+      "etaLatePct": 6.3,
+      "interceptedPct": 14.4,
+      "portalPct": 36.9,
+      "avgInfluenceD120": 1408.5,
+      "avgTroopsAlive": 763.49,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 257,
+          "portalPct": 34.24,
+          "alive1500Pct": 34.24,
+          "avgCityLoss": 2.59,
+          "avgInfluenceD120": 1422.76
+        },
+        "posto": {
+          "players": 228,
+          "portalPct": 45.18,
+          "alive1500Pct": 45.18,
+          "avgCityLoss": 2.55,
+          "avgInfluenceD120": 1471.14
+        },
+        "bastiao": {
+          "players": 256,
+          "portalPct": 33.98,
+          "alive1500Pct": 33.98,
+          "avgCityLoss": 2.04,
+          "avgInfluenceD120": 1403.18
+        },
+        "celeiro": {
+          "players": 259,
+          "portalPct": 35.14,
+          "alive1500Pct": 35.14,
+          "avgCityLoss": 2.77,
+          "avgInfluenceD120": 1344.47
+        }
+      }
+    },
+    {
+      "raidLootMult": 1,
+      "battleLossMult": 1,
+      "players": 1000,
+      "day90EligiblePct": 45.6,
+      "alive1500Pct": 32.7,
+      "cityLossPct": 96.5,
+      "avgCitiesLost": 3.01,
+      "marchDeathPct": 21.1,
+      "etaLatePct": 6.3,
+      "interceptedPct": 14.8,
+      "portalPct": 32.7,
+      "avgInfluenceD120": 1353.17,
+      "avgTroopsAlive": 800.31,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 257,
+          "portalPct": 30.74,
+          "alive1500Pct": 30.74,
+          "avgCityLoss": 3.14,
+          "avgInfluenceD120": 1367.51
+        },
+        "posto": {
+          "players": 228,
+          "portalPct": 39.91,
+          "alive1500Pct": 39.91,
+          "avgCityLoss": 3.12,
+          "avgInfluenceD120": 1403.68
+        },
+        "bastiao": {
+          "players": 256,
+          "portalPct": 30.86,
+          "alive1500Pct": 30.86,
+          "avgCityLoss": 2.51,
+          "avgInfluenceD120": 1354.36
+        },
+        "celeiro": {
+          "players": 259,
+          "portalPct": 30.12,
+          "alive1500Pct": 30.12,
+          "avgCityLoss": 3.29,
+          "avgInfluenceD120": 1293.3
+        }
+      }
+    },
+    {
+      "raidLootMult": 1,
+      "battleLossMult": 1.15,
+      "players": 1000,
+      "day90EligiblePct": 45.5,
+      "alive1500Pct": 31,
+      "cityLossPct": 98,
+      "avgCitiesLost": 3.51,
+      "marchDeathPct": 12.4,
+      "etaLatePct": 6.3,
+      "interceptedPct": 6.1,
+      "portalPct": 31,
+      "avgInfluenceD120": 1300.82,
+      "avgTroopsAlive": 837.53,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 257,
+          "portalPct": 30.74,
+          "alive1500Pct": 30.74,
+          "avgCityLoss": 3.73,
+          "avgInfluenceD120": 1306.03
+        },
+        "posto": {
+          "players": 228,
+          "portalPct": 39.47,
+          "alive1500Pct": 39.47,
+          "avgCityLoss": 3.63,
+          "avgInfluenceD120": 1355.84
+        },
+        "bastiao": {
+          "players": 256,
+          "portalPct": 29.3,
+          "alive1500Pct": 29.3,
+          "avgCityLoss": 2.91,
+          "avgInfluenceD120": 1305.27
+        },
+        "celeiro": {
+          "players": 259,
+          "portalPct": 25.48,
+          "alive1500Pct": 25.48,
+          "avgCityLoss": 3.77,
+          "avgInfluenceD120": 1242.83
+        }
+      }
+    },
+    {
+      "raidLootMult": 1,
+      "battleLossMult": 1.3,
+      "players": 1000,
+      "day90EligiblePct": 45.5,
+      "alive1500Pct": 26.5,
+      "cityLossPct": 98.7,
+      "avgCitiesLost": 3.95,
+      "marchDeathPct": 9.7,
+      "etaLatePct": 6.3,
+      "interceptedPct": 3.4,
+      "portalPct": 26.5,
+      "avgInfluenceD120": 1250.24,
+      "avgTroopsAlive": 874.88,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 257,
+          "portalPct": 26.85,
+          "alive1500Pct": 26.85,
+          "avgCityLoss": 4.17,
+          "avgInfluenceD120": 1256.25
+        },
+        "posto": {
+          "players": 228,
+          "portalPct": 32.89,
+          "alive1500Pct": 32.89,
+          "avgCityLoss": 4.09,
+          "avgInfluenceD120": 1295.81
+        },
+        "bastiao": {
+          "players": 256,
+          "portalPct": 25.39,
+          "alive1500Pct": 25.39,
+          "avgCityLoss": 3.32,
+          "avgInfluenceD120": 1261.37
+        },
+        "celeiro": {
+          "players": 259,
+          "portalPct": 21.62,
+          "alive1500Pct": 21.62,
+          "avgCityLoss": 4.22,
+          "avgInfluenceD120": 1193.16
+        }
+      }
+    },
+    {
+      "raidLootMult": 1.2,
+      "battleLossMult": 0.7,
+      "players": 1000,
+      "day90EligiblePct": 46.1,
+      "alive1500Pct": 41.3,
+      "cityLossPct": 88,
+      "avgCitiesLost": 1.99,
+      "marchDeathPct": 20.4,
+      "etaLatePct": 6.3,
+      "interceptedPct": 14.1,
+      "portalPct": 41.3,
+      "avgInfluenceD120": 1464.33,
+      "avgTroopsAlive": 727.36,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 257,
+          "portalPct": 37.74,
+          "alive1500Pct": 37.74,
+          "avgCityLoss": 2.02,
+          "avgInfluenceD120": 1482.77
+        },
+        "posto": {
+          "players": 228,
+          "portalPct": 50,
+          "alive1500Pct": 50,
+          "avgCityLoss": 2.07,
+          "avgInfluenceD120": 1520.53
+        },
+        "bastiao": {
+          "players": 256,
+          "portalPct": 36.72,
+          "alive1500Pct": 36.72,
+          "avgCityLoss": 1.63,
+          "avgInfluenceD120": 1451.39
+        },
+        "celeiro": {
+          "players": 259,
+          "portalPct": 41.7,
+          "alive1500Pct": 41.7,
+          "avgCityLoss": 2.25,
+          "avgInfluenceD120": 1409.34
+        }
+      }
+    },
+    {
+      "raidLootMult": 1.2,
+      "battleLossMult": 0.85,
+      "players": 1000,
+      "day90EligiblePct": 46.1,
+      "alive1500Pct": 37.5,
+      "cityLossPct": 93.4,
+      "avgCitiesLost": 2.48,
+      "marchDeathPct": 21.1,
+      "etaLatePct": 6.3,
+      "interceptedPct": 14.8,
+      "portalPct": 37.5,
+      "avgInfluenceD120": 1413,
+      "avgTroopsAlive": 763.49,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 257,
+          "portalPct": 33.85,
+          "alive1500Pct": 33.85,
+          "avgCityLoss": 2.59,
+          "avgInfluenceD120": 1426.62
+        },
+        "posto": {
+          "players": 228,
+          "portalPct": 47.37,
+          "alive1500Pct": 47.37,
+          "avgCityLoss": 2.54,
+          "avgInfluenceD120": 1472.41
+        },
+        "bastiao": {
+          "players": 256,
+          "portalPct": 33.59,
+          "alive1500Pct": 33.59,
+          "avgCityLoss": 2.04,
+          "avgInfluenceD120": 1405.23
+        },
+        "celeiro": {
+          "players": 259,
+          "portalPct": 36.29,
+          "alive1500Pct": 36.29,
+          "avgCityLoss": 2.75,
+          "avgInfluenceD120": 1354.86
+        }
+      }
+    },
+    {
+      "raidLootMult": 1.2,
+      "battleLossMult": 1,
+      "players": 1000,
+      "day90EligiblePct": 46.2,
+      "alive1500Pct": 33.9,
+      "cityLossPct": 96.4,
+      "avgCitiesLost": 3,
+      "marchDeathPct": 19.9,
+      "etaLatePct": 6.3,
+      "interceptedPct": 13.6,
+      "portalPct": 33.9,
+      "avgInfluenceD120": 1358.87,
+      "avgTroopsAlive": 800.31,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 257,
+          "portalPct": 31.91,
+          "alive1500Pct": 31.91,
+          "avgCityLoss": 3.14,
+          "avgInfluenceD120": 1374.49
+        },
+        "posto": {
+          "players": 228,
+          "portalPct": 42.11,
+          "alive1500Pct": 42.11,
+          "avgCityLoss": 3.1,
+          "avgInfluenceD120": 1411.13
+        },
+        "bastiao": {
+          "players": 256,
+          "portalPct": 31.25,
+          "alive1500Pct": 31.25,
+          "avgCityLoss": 2.51,
+          "avgInfluenceD120": 1354.82
+        },
+        "celeiro": {
+          "players": 259,
+          "portalPct": 31.27,
+          "alive1500Pct": 31.27,
+          "avgCityLoss": 3.27,
+          "avgInfluenceD120": 1301.37
+        }
+      }
+    },
+    {
+      "raidLootMult": 1.2,
+      "battleLossMult": 1.15,
+      "players": 1000,
+      "day90EligiblePct": 46.1,
+      "alive1500Pct": 32.1,
+      "cityLossPct": 98,
+      "avgCitiesLost": 3.5,
+      "marchDeathPct": 11.8,
+      "etaLatePct": 6.3,
+      "interceptedPct": 5.5,
+      "portalPct": 32.1,
+      "avgInfluenceD120": 1304.07,
+      "avgTroopsAlive": 837.53,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 257,
+          "portalPct": 31.52,
+          "alive1500Pct": 31.52,
+          "avgCityLoss": 3.73,
+          "avgInfluenceD120": 1307.56
+        },
+        "posto": {
+          "players": 228,
+          "portalPct": 39.91,
+          "alive1500Pct": 39.91,
+          "avgCityLoss": 3.61,
+          "avgInfluenceD120": 1355.84
+        },
+        "bastiao": {
+          "players": 256,
+          "portalPct": 31.25,
+          "alive1500Pct": 31.25,
+          "avgCityLoss": 2.91,
+          "avgInfluenceD120": 1309.63
+        },
+        "celeiro": {
+          "players": 259,
+          "portalPct": 26.64,
+          "alive1500Pct": 26.64,
+          "avgCityLoss": 3.75,
+          "avgInfluenceD120": 1249.56
+        }
+      }
+    },
+    {
+      "raidLootMult": 1.2,
+      "battleLossMult": 1.3,
+      "players": 1000,
+      "day90EligiblePct": 46.1,
+      "alive1500Pct": 27,
+      "cityLossPct": 98.7,
+      "avgCitiesLost": 3.94,
+      "marchDeathPct": 9.7,
+      "etaLatePct": 6.3,
+      "interceptedPct": 3.4,
+      "portalPct": 27,
+      "avgInfluenceD120": 1255.79,
+      "avgTroopsAlive": 874.88,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 257,
+          "portalPct": 27.24,
+          "alive1500Pct": 27.24,
+          "avgCityLoss": 4.16,
+          "avgInfluenceD120": 1265.55
+        },
+        "posto": {
+          "players": 228,
+          "portalPct": 33.33,
+          "alive1500Pct": 33.33,
+          "avgCityLoss": 4.07,
+          "avgInfluenceD120": 1297.12
+        },
+        "bastiao": {
+          "players": 256,
+          "portalPct": 25.39,
+          "alive1500Pct": 25.39,
+          "avgCityLoss": 3.32,
+          "avgInfluenceD120": 1265.7
+        },
+        "celeiro": {
+          "players": 259,
+          "portalPct": 22.78,
+          "alive1500Pct": 22.78,
+          "avgCityLoss": 4.21,
+          "avgInfluenceD120": 1199.92
+        }
+      }
+    },
+    {
+      "raidLootMult": 1.4,
+      "battleLossMult": 0.7,
+      "players": 1000,
+      "day90EligiblePct": 47.1,
+      "alive1500Pct": 43.2,
+      "cityLossPct": 87.8,
+      "avgCitiesLost": 1.98,
+      "marchDeathPct": 19.6,
+      "etaLatePct": 6.4,
+      "interceptedPct": 13.2,
+      "portalPct": 43.2,
+      "avgInfluenceD120": 1468.51,
+      "avgTroopsAlive": 726.96,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 255,
+          "portalPct": 38.82,
+          "alive1500Pct": 38.82,
+          "avgCityLoss": 2.02,
+          "avgInfluenceD120": 1485.42
+        },
+        "posto": {
+          "players": 229,
+          "portalPct": 49.78,
+          "alive1500Pct": 49.78,
+          "avgCityLoss": 2.08,
+          "avgInfluenceD120": 1524.54
+        },
+        "bastiao": {
+          "players": 255,
+          "portalPct": 41.96,
+          "alive1500Pct": 41.96,
+          "avgCityLoss": 1.58,
+          "avgInfluenceD120": 1462.92
+        },
+        "celeiro": {
+          "players": 261,
+          "portalPct": 42.91,
+          "alive1500Pct": 42.91,
+          "avgCityLoss": 2.25,
+          "avgInfluenceD120": 1408.29
+        }
+      }
+    },
+    {
+      "raidLootMult": 1.4,
+      "battleLossMult": 0.85,
+      "players": 1000,
+      "day90EligiblePct": 47.1,
+      "alive1500Pct": 38.2,
+      "cityLossPct": 93.2,
+      "avgCitiesLost": 2.47,
+      "marchDeathPct": 21.6,
+      "etaLatePct": 6.4,
+      "interceptedPct": 15.2,
+      "portalPct": 38.2,
+      "avgInfluenceD120": 1418.57,
+      "avgTroopsAlive": 762.98,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 255,
+          "portalPct": 33.73,
+          "alive1500Pct": 33.73,
+          "avgCityLoss": 2.58,
+          "avgInfluenceD120": 1426.08
+        },
+        "posto": {
+          "players": 229,
+          "portalPct": 46.72,
+          "alive1500Pct": 46.72,
+          "avgCityLoss": 2.55,
+          "avgInfluenceD120": 1470.93
+        },
+        "bastiao": {
+          "players": 255,
+          "portalPct": 36.86,
+          "alive1500Pct": 36.86,
+          "avgCityLoss": 2,
+          "avgInfluenceD120": 1426
+        },
+        "celeiro": {
+          "players": 261,
+          "portalPct": 36.4,
+          "alive1500Pct": 36.4,
+          "avgCityLoss": 2.75,
+          "avgInfluenceD120": 1358.05
+        }
+      }
+    },
+    {
+      "raidLootMult": 1.4,
+      "battleLossMult": 1,
+      "players": 1000,
+      "day90EligiblePct": 47.2,
+      "alive1500Pct": 34.5,
+      "cityLossPct": 96.3,
+      "avgCitiesLost": 2.99,
+      "marchDeathPct": 20.6,
+      "etaLatePct": 6.4,
+      "interceptedPct": 14.2,
+      "portalPct": 34.5,
+      "avgInfluenceD120": 1364.37,
+      "avgTroopsAlive": 799.74,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 255,
+          "portalPct": 34.9,
+          "alive1500Pct": 34.9,
+          "avgCityLoss": 3.13,
+          "avgInfluenceD120": 1377.85
+        },
+        "posto": {
+          "players": 229,
+          "portalPct": 41.48,
+          "alive1500Pct": 41.48,
+          "avgCityLoss": 3.11,
+          "avgInfluenceD120": 1418.41
+        },
+        "bastiao": {
+          "players": 255,
+          "portalPct": 32.16,
+          "alive1500Pct": 32.16,
+          "avgCityLoss": 2.47,
+          "avgInfluenceD120": 1368.08
+        },
+        "celeiro": {
+          "players": 261,
+          "portalPct": 30.27,
+          "alive1500Pct": 30.27,
+          "avgCityLoss": 3.28,
+          "avgInfluenceD120": 1300.15
+        }
+      }
+    },
+    {
+      "raidLootMult": 1.4,
+      "battleLossMult": 1.15,
+      "players": 1000,
+      "day90EligiblePct": 47.1,
+      "alive1500Pct": 32.2,
+      "cityLossPct": 97.9,
+      "avgCitiesLost": 3.49,
+      "marchDeathPct": 13.6,
+      "etaLatePct": 6.4,
+      "interceptedPct": 7.2,
+      "portalPct": 32.2,
+      "avgInfluenceD120": 1311.91,
+      "avgTroopsAlive": 836.96,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 255,
+          "portalPct": 31.76,
+          "alive1500Pct": 31.76,
+          "avgCityLoss": 3.72,
+          "avgInfluenceD120": 1312.39
+        },
+        "posto": {
+          "players": 229,
+          "portalPct": 37.99,
+          "alive1500Pct": 37.99,
+          "avgCityLoss": 3.62,
+          "avgInfluenceD120": 1363.7
+        },
+        "bastiao": {
+          "players": 255,
+          "portalPct": 33.33,
+          "alive1500Pct": 33.33,
+          "avgCityLoss": 2.86,
+          "avgInfluenceD120": 1325.66
+        },
+        "celeiro": {
+          "players": 261,
+          "portalPct": 26.44,
+          "alive1500Pct": 26.44,
+          "avgCityLoss": 3.75,
+          "avgInfluenceD120": 1252.56
+        }
+      }
+    },
+    {
+      "raidLootMult": 1.4,
+      "battleLossMult": 1.3,
+      "players": 1000,
+      "day90EligiblePct": 47.1,
+      "alive1500Pct": 27.3,
+      "cityLossPct": 98.7,
+      "avgCitiesLost": 3.93,
+      "marchDeathPct": 10.2,
+      "etaLatePct": 6.4,
+      "interceptedPct": 3.8,
+      "portalPct": 27.3,
+      "avgInfluenceD120": 1261.83,
+      "avgTroopsAlive": 874.3,
+      "profileBreakdown": {
+        "metropole": {
+          "players": 255,
+          "portalPct": 27.45,
+          "alive1500Pct": 27.45,
+          "avgCityLoss": 4.15,
+          "avgInfluenceD120": 1264.95
+        },
+        "posto": {
+          "players": 229,
+          "portalPct": 31.88,
+          "alive1500Pct": 31.88,
+          "avgCityLoss": 4.08,
+          "avgInfluenceD120": 1302.7
+        },
+        "bastiao": {
+          "players": 255,
+          "portalPct": 27.84,
+          "alive1500Pct": 27.84,
+          "avgCityLoss": 3.29,
+          "avgInfluenceD120": 1277.14
+        },
+        "celeiro": {
+          "players": 261,
+          "portalPct": 22.61,
+          "alive1500Pct": 22.61,
+          "avgCityLoss": 4.2,
+          "avgInfluenceD120": 1207.96
+        }
+      }
+    }
+  ]
+}

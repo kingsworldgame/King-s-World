@@ -1,0 +1,540 @@
+﻿KINGSWORLD
+03. BACKLOG DE EXECUCAO
+Mapa de Ataque do Projeto
+
+==================================================
+1. FINALIDADE
+==================================================
+
+Este documento quebra KingsWorld em trabalho executavel.
+
+Objetivo:
+
+- transformar o GDD e o banco em tarefas reais;
+- ordenar a execucao por dependencia;
+- evitar implementar tela bonita em cima de sistema inexistente;
+- criar um mapa claro do que precisa nascer primeiro.
+
+Regra de uso:
+
+- tarefa bloqueada por dependencia nao entra antes da hora;
+- tarefa concluida precisa atender o criterio de pronto;
+- tudo que mexe em regra central deve continuar alinhado com 01_MVP_FECHADO.txt;
+- SQL fica em hold e pode receber novas pecas depois, sem travar a execucao do backlog.
+
+
+==================================================
+2. ORDEM MACRO OFICIAL
+==================================================
+
+A ordem oficial do projeto continua sendo:
+
+1. MVP fechado.
+2. Banco de dados.
+3. Backlog de execucao.
+4. Telas e fluxos.
+
+Em execucao pratica, o backlog abaixo respeita esta ordem e prepara o terreno para as telas entrarem por ultimo, sem adivinhacao.
+
+
+==================================================
+3. REGRAS DO BACKLOG
+==================================================
+
+- P0 = obrigatorio para o jogo existir.
+- P1 = obrigatorio para a temporada fechar como KingsWorld.
+- P2 = importante, mas pode entrar depois do core funcionar.
+- "Depende de" define o bloqueio tecnico real.
+- "Pronto quando" define o criterio de saida.
+
+
+==================================================
+4. MILESTONE 0 - FUNDACAO DO PROJETO
+==================================================
+
+B001 [P0] Definir stack da aplicacao
+Depende de: nenhuma
+Pronto quando: stack de frontend, backend, auth, jobs e deploy estiver escolhida e documentada.
+
+B002 [P0] Criar estrutura inicial do repositorio
+Depende de: B001
+Pronto quando: projeto tiver pastas base, scripts padrao e organizacao inicial de app, server e infra.
+
+B003 [P0] Configurar ambiente local e variaveis
+Depende de: B002
+Pronto quando: ambiente sobe localmente com envs nomeadas, exemplo de configuracao e bootstrap documentado.
+
+B004 [P0] Configurar qualidade minima
+Depende de: B002
+Pronto quando: lint, formatacao e script de teste base existirem e rodarem localmente.
+
+B005 [P1] Configurar pipeline minima
+Depende de: B004
+Pronto quando: validacao automatica roda em push ou PR para build, lint e testes base.
+
+
+==================================================
+5. MILESTONE 1 - BANCO E INFRA ESTRUTURAL
+==================================================
+
+B010 [P0] Aplicar schema base no ambiente de dev
+Depende de: B003
+Pronto quando: 03_SUPABASE_SCHEMA.sql estiver aplicado sem erro em um banco limpo.
+
+B011 [P0] Versionar migrations reais
+Depende de: B010
+Pronto quando: schema deixar de ser um arquivo solto e virar migrations ordenadas por execucao.
+
+B012 [P0] Criar seeds dos catalogos base
+Depende de: B011
+Pronto quando: buildings, research, protocols, medals, events e units puderem ser carregados por seed.
+
+B013 [P0] Criar camada de acesso a dados
+Depende de: B010
+Pronto quando: conexao, transacoes e repositorios basicos estiverem funcionando.
+
+B014 [P1] Criar trilha de auditoria minima
+Depende de: B013
+Pronto quando: mudancas criticas conseguirem gravar audit_events sem gambiarras manuais.
+
+
+==================================================
+6. MILESTONE 2 - CONTA GLOBAL E LOBBY
+==================================================
+
+B020 [P0] Implementar cadastro e login
+Depende de: B013
+Pronto quando: usuario consegue criar conta e autenticar sessao.
+
+B021 [P0] Implementar recuperacao de senha
+Depende de: B020
+Pronto quando: fluxo minimo de redefinicao existir e ser seguro.
+
+B022 [P0] Implementar perfil global minimo
+Depende de: B020
+Pronto quando: username, medalhas e historico basico puderem ser consultados.
+
+B023 [P0] Implementar listagem de mundos
+Depende de: B013
+Pronto quando: usuario autenticado consegue ver mundos abertos, em andamento e finalizados.
+
+B024 [P0] Implementar registro do jogador no mundo
+Depende de: B023
+Pronto quando: usuario entra num mundo aberto e vira um world_player valido.
+
+B025 [P1] Implementar leitura de ranking de mundo finalizado
+Depende de: B023
+Pronto quando: rankings congelados e vencedores puderem ser consultados no lobby.
+
+
+==================================================
+7. MILESTONE 3 - MAPA E BOOTSTRAP DO MUNDO
+==================================================
+
+B030 [P0] Criar gerador de mapa
+Depende de: B010
+Pronto quando: um mundo novo gera map_tiles coerentes com coordenadas, biomas e limites.
+
+B031 [P0] Criar gerador de sites do mapa
+Depende de: B030
+Pronto quando: map_sites puderem ser criados para aldeias, Cidadelas futuras e pontos especiais.
+
+B032 [P0] Criar bootstrap de jogador no mundo
+Depende de: B024, B031
+Pronto quando: novo jogador recebe Capital inicial, recursos iniciais e estado basico de progresso.
+
+B033 [P0] Criar bootstrap da Coroa
+Depende de: B032
+Pronto quando: Rei e Principe existem, estao vinculados ao jogador e ocupam local inicial valido.
+
+B034 [P0] Criar selecao de aldeia ativa
+Depende de: B032
+Pronto quando: backend consegue entregar aldeia atual e lista de aldeias do jogador.
+
+B035 [P1] Criar criacao de Cidadela de Tribo no mapa
+Depende de: B031, B080
+Pronto quando: Tribo ativa puder iniciar a obra coletiva em um site valido.
+
+
+==================================================
+8. MILESTONE 4 - ECONOMIA E EDIFICIOS
+==================================================
+
+B040 [P0] Implementar reconciliacao de recursos por delta time
+Depende de: B013, B032
+Pronto quando: Materiais, Suprimentos, Energia e Influencia puderem ser recalculados com base no tempo passado.
+
+B041 [P0] Implementar leitura consolidada de recursos da aldeia
+Depende de: B040
+Pronto quando: uma consulta entrega estoque, capacidade, taxa e upkeep da aldeia.
+
+B042 [P0] Implementar regras de edificios por catalogo
+Depende de: B012, B013
+Pronto quando: custo, tempo, prerequisito e efeito de edificio puderem ser lidos do banco.
+
+B043 [P0] Implementar fila de construcao e upgrade
+Depende de: B040, B042
+Pronto quando: jogador consegue iniciar upgrade com custo debitado e prazo registrado.
+
+B044 [P0] Implementar worker de conclusao de edificios
+Depende de: B043
+Pronto quando: jobs vencidos atualizam o nivel do edificio automaticamente.
+
+B045 [P1] Implementar downgrade e repair
+Depende de: B043
+Pronto quando: sistema suporta reparo e rebaixamento com consistencia de custos e reembolso.
+
+B046 [P1] Implementar efeitos cacheados de edificios na economia
+Depende de: B044
+Pronto quando: edificios ja impactam producao, capacidade, defesa ou logistica de forma real.
+
+B047 [P1] Implementar Maravilha / Monumento
+Depende de: B046
+Pronto quando: obra de endgame pode ser iniciada e concluida com efeito politico valido.
+
+
+==================================================
+9. MILESTONE 5 - CIENCIA E RECRUTAMENTO
+==================================================
+
+B050 [P0] Implementar arvore de pesquisa global
+Depende de: B012, B013
+Pronto quando: researches sao lidas por ramo e nivel.
+
+B051 [P0] Implementar fila de pesquisa
+Depende de: B050
+Pronto quando: jogador consegue iniciar pesquisa por tempo e concluir progresso.
+
+B052 [P1] Aplicar efeitos de pesquisa no jogador inteiro
+Depende de: B051
+Pronto quando: uma pesquisa concluida afeta todas as aldeias e sistemas do jogador.
+
+B053 [P0] Implementar recrutamento de tropas Tier 3
+Depende de: B042, B043, B012
+Pronto quando: Quartel consegue treinar Milicia, Atiradores, Batedores e Maquinario por grau.
+
+B054 [P0] Implementar recrutamento de oficiais Tier 2
+Depende de: B042, B043, B012
+Pronto quando: Arsenal consegue produzir Lider de Guerra, Heroi, General, Diplomata, Espiao, Engenheiro e Agricultor.
+
+B055 [P1] Implementar validacao de custos e prerequisitos militares
+Depende de: B053, B054
+Pronto quando: tropas e oficiais respeitam custo, tempo, edificio e pesquisa.
+
+
+==================================================
+10. MILESTONE 6 - MOVIMENTOS E LOGISTICA
+==================================================
+
+B060 [P0] Implementar calculo de tempo de viagem
+Depende de: B030, B031
+Pronto quando: origem, destino, tipo de unidade e modificadores retornam tempo valido.
+
+B061 [P0] Implementar criacao de movimento
+Depende de: B060, B053, B054
+Pronto quando: ataque, apoio, espionagem, transporte e supply geram rows em movements e tabelas filhas.
+
+B062 [P0] Implementar worker de resolucao de movimento
+Depende de: B061
+Pronto quando: movimentos com arrival_at vencido entram em resolucao server-side.
+
+B063 [P1] Implementar transporte de recursos
+Depende de: B061
+Pronto quando: recursos saem da origem e chegam ao destino com seguranca de saldo.
+
+B064 [P1] Implementar guarnicao de apoio
+Depende de: B061
+Pronto quando: tropas aliadas conseguem estacionar e defender aldeias ou Cidadelas.
+
+B065 [P1] Implementar modificadores logisticos
+Depende de: B060, B052
+Pronto quando: General, Agricultor e Malha Viaria Imperial alteram tempo e eficiencia de deslocamento.
+
+B066 [P1] Implementar movimento do Rei e do Principe
+Depende de: B061, B033
+Pronto quando: Coroa pode mudar de aldeia com regra valida e auditoria.
+
+
+==================================================
+11. MILESTONE 7 - COMBATE, ESPIONAGEM E CONQUISTA
+==================================================
+
+B070 [P0] Implementar motor de combate base
+Depende de: B062, B053, B054
+Pronto quando: atacante e defensor geram forca total, ruptura e baixas proporcionais.
+
+B071 [P0] Implementar bonus de muralha e Bastiao
+Depende de: B070, B046
+Pronto quando: defesa estrutural entra de fato no calculo da batalha.
+
+B072 [P0] Implementar espionagem
+Depende de: B062, B054
+Pronto quando: Espiao gera relatorio de tropas, edificios e chance de revelar o Rei.
+
+B073 [P1] Implementar saque
+Depende de: B070, B040
+Pronto quando: ataque vencedor carrega Materiais e Suprimentos sem quebrar estoques negativos.
+
+B074 [P1] Implementar conquista por Diplomata
+Depende de: B070, B054
+Pronto quando: Colonia pode trocar de dono em ataque valido, sem permitir anexacao direta de Capital.
+
+B075 [P1] Implementar dano estrutural por Engenheiro
+Depende de: B070, B054, B045
+Pronto quando: ataque vencedor consegue rebaixar edificios conforme regra do cerco.
+
+B076 [P0] Implementar morte do Rei
+Depende de: B070, B033
+Pronto quando: ruptura na aldeia do Rei aciona eliminacao ou sucessao.
+
+B077 [P0] Implementar sucessao pelo Principe
+Depende de: B076, B033, B046
+Pronto quando: sistema verifica elegibilidade da Colonia, promove Capital quando possivel ou deixa estado fragil registrado.
+
+B078 [P1] Implementar retorno de tropas sobreviventes
+Depende de: B070, B073
+Pronto quando: sobreviventes voltam para origem com composicao e loot corretos.
+
+
+==================================================
+12. MILESTONE 8 - TRIBOS, CIDADELA E COLAPSO
+==================================================
+
+B080 [P0] Implementar criacao e convite de Tribo
+Depende de: B024
+Pronto quando: jogadores conseguem criar Tribo, convidar e aceitar membros respeitando limite de 6.
+
+B081 [P1] Implementar visao compartilhada de relatorios
+Depende de: B080, B110
+Pronto quando: membros da mesma Tribo conseguem receber inteligencia relevante compartilhada.
+
+B082 [P1] Implementar doacoes internas
+Depende de: B063, B080
+Pronto quando: membros conseguem enviar recursos uns aos outros.
+
+B083 [P1] Implementar construcao da Cidadela
+Depende de: B035, B082
+Pronto quando: Cidadela consome doacoes, progride de estado e ativa bonus quando concluida.
+
+B084 [P1] Implementar bonus de Cidadela
+Depende de: B083
+Pronto quando: membros da Tribo recebem efeitos passivos rastreaveis.
+
+B085 [P1] Implementar cerco e destruicao da Cidadela
+Depende de: B070, B083
+Pronto quando: Cidadela pode ser atacada, perder defesa e ser destruida.
+
+B086 [P1] Implementar Colapso de Tribo
+Depende de: B085
+Pronto quando: destruicao da Cidadela ativa debuff coletivo e altera estado da Tribo.
+
+
+==================================================
+13. MILESTONE 9 - FASE 2, PVE E APOCALIPSE
+==================================================
+
+B090 [P0] Implementar scheduler de fase do mundo
+Depende de: B010
+Pronto quando: o mundo muda automaticamente de Fase 1 para Fase 2 no Dia 91.
+
+B091 [P0] Bloquear fundacao de novas aldeias na Fase 2
+Depende de: B090
+Pronto quando: tentativa de expansao por fundacao falha a partir da virada da fase.
+
+B092 [P1] Implementar Tributos do Servidor
+Depende de: B090, B040, B082
+Pronto quando: servidor cria cobrancas com prazo e aplica consequencia por falha.
+
+B093 [P1] Implementar Catastrofes Naturais
+Depende de: B090, B092
+Pronto quando: evento global consegue alterar economia, defesa ou operacao do mundo por tempo definido.
+
+B094 [P1] Implementar Protocolos de Sobrevivencia
+Depende de: B045, B092
+Pronto quando: Sacrificio / Desconstrucao e Foco Direcionado podem ser ativados com efeito real.
+
+B095 [P1] Implementar Hordas contra jogadores
+Depende de: B090, B070
+Pronto quando: servidor gera ataques NPC por score ou faixa de risco.
+
+B096 [P1] Implementar Hordas contra Cidadelas
+Depende de: B095, B083
+Pronto quando: Cidadelas podem ser alvo prioritario de hordas pesadas.
+
+B097 [P1] Implementar escalonamento das ameacas
+Depende de: B092, B095
+Pronto quando: tributos e hordas usam score para gerar pressao proporcional.
+
+
+==================================================
+14. MILESTONE 10 - RELATORIOS, SCORE E FECHAMENTO DO MUNDO
+==================================================
+
+B100 [P0] Implementar geracao de relatorios
+Depende de: B062, B070
+Pronto quando: combate, espionagem, saque, apoio, tributo e horda geram reports consistentes.
+
+B101 [P0] Implementar entrega de relatorios
+Depende de: B100
+Pronto quando: destinatarios corretos recebem reports pessoais ou compartilhados.
+
+B102 [P0] Implementar ledger de Score de Poder
+Depende de: B013
+Pronto quando: ganhos e perdas de score entram em score_entries com motivo rastreavel.
+
+B103 [P0] Implementar caches de score individual e coletivo
+Depende de: B102
+Pronto quando: ranking rapido funciona sem perder trilha de auditoria.
+
+B104 [P1] Implementar ranking em tempo real
+Depende de: B103
+Pronto quando: mundo e Tribos podem ser ordenados por score atual.
+
+B105 [P1] Implementar encerramento do mundo
+Depende de: B090, B103
+Pronto quando: mundo fecha no Dia 120, congela standings e bloqueia novas acoes de gameplay.
+
+B106 [P1] Implementar distribuicao de medalhas e legado
+Depende de: B105
+Pronto quando: conta global recebe medalhas e historico da temporada finalizada.
+
+
+==================================================
+15. MILESTONE 11 - CASCA DE INTERFACE
+==================================================
+
+B110 [P0] Implementar shell do app
+Depende de: B020, B023, B034
+Pronto quando: app tem autenticacao, layout base, header e bottom navigation funcional.
+
+B111 [P0] Implementar tela Imperio
+Depende de: B034, B041
+Pronto quando: lista de aldeias, resumo rapido e troca de foco funcionam.
+
+B112 [P0] Implementar tela Operacoes
+Depende de: B051, B061, B100
+Pronto quando: fila de pesquisa, construcoes e movimentos aparecem na mesma visao.
+
+B113 [P0] Implementar tela Base
+Depende de: B043, B053, B054
+Pronto quando: jogador interage com edificios, upgrades e recrutamento da aldeia ativa.
+
+B114 [P0] Implementar tela Tabuleiro
+Depende de: B030, B031, B061
+Pronto quando: mapa em grid permite selecionar alvos e emitir ordens.
+
+B115 [P0] Implementar tela Inteligencia
+Depende de: B101
+Pronto quando: reports, alertas e notificacoes internas sao legiveis e filtraveis.
+
+B116 [P1] Implementar estados visuais de Fase 2
+Depende de: B090, B092, B095
+Pronto quando: jogador percebe claramente tributos, hordas e estado apocaliptico do mundo.
+
+
+==================================================
+16. MILESTONE 12 - QUALIDADE, SEGURANCA E FECHAMENTO TECNICO
+==================================================
+
+B120 [P0] Criar testes de recursos e reconciliacao
+Depende de: B040
+Pronto quando: delta time, capacities e upkeep estao cobertos por teste automatizado.
+
+B121 [P0] Criar testes de combate
+Depende de: B070
+Pronto quando: forca, baixas, muralha, Bastiao e oficiais centrais possuem cobertura minima.
+
+B122 [P0] Criar testes de morte do Rei e sucessao
+Depende de: B076, B077
+Pronto quando: casos de eliminacao, sobrevivencia e promocao de Capital estao cobertos.
+
+B123 [P0] Criar testes de Cidadela e Colapso
+Depende de: B085, B086
+Pronto quando: destruicao e debuff coletivo estao verificados.
+
+B124 [P0] Criar testes da Fase 2
+Depende de: B092, B094, B095
+Pronto quando: tributo, protocolos e hordas possuem cenarios automatizados.
+
+B125 [P1] Revisar seguranca server-side
+Depende de: B120, B121, B122
+Pronto quando: cliente nao consegue forjar tempo, saldo, score ou resultado de combate.
+
+B126 [P1] Instrumentar logs e observabilidade
+Depende de: B014, B125
+Pronto quando: eventos criticos podem ser rastreados em producao sem cegueira operacional.
+
+
+==================================================
+17. CAMINHO MINIMO DE ATAQUE
+==================================================
+
+Se for para comecar a execucao amanha sem travar, a ordem mais segura e:
+
+1. B001 a B004
+2. B010 a B013
+3. B020 a B024
+4. B030 a B034
+5. B040 a B044
+6. B050 a B055
+7. B060 a B078
+8. B080 a B086
+9. B090 a B097
+10. B100 a B106
+11. B110 a B116
+12. B120 a B126
+
+Essa ordem mantem o jogo crescendo de fundacao para guerra, de guerra para endgame, e do endgame para interface.
+
+
+==================================================
+18. O QUE PODE RODAR EM PARALELO
+==================================================
+
+Pode paralelizar sem se sabotar:
+
+- B004 com B005
+- B011 com B013
+- B022 com B023
+- B042 com B050
+- B053 com B054
+- B100 com B102
+- B111, B112, B113, B114 e B115 depois que as APIs base existirem
+- B120, B121, B122 e B123 conforme cada sistema fechar
+
+Nao deve paralelizar cedo demais:
+
+- combate antes de movimentos;
+- sucessao antes de morte do Rei;
+- Cidadela antes de Tribo;
+- Fase 2 antes de score e scheduler;
+- telas finais antes de APIs centrais.
+
+
+==================================================
+19. DEFINICAO DE PROJETO JOGAVEL
+==================================================
+
+KingsWorld passa a ser considerado jogavel quando:
+
+- um jogador entra num mundo e recebe Capital;
+- consegue produzir, construir e pesquisar;
+- consegue treinar tropas e oficiais;
+- consegue mover, atacar, espionar, apoiar e saquear;
+- pode morrer pelo Rei ou sobreviver por sucessao;
+- consegue criar Tribo, erguer Cidadela e sofrer Colapso;
+- o Dia 91 muda o meta de verdade;
+- o mundo fecha no Dia 120 com ranking e legado.
+
+Se isso tudo existir, o projeto saiu do papel de verdade.
+
+
+==================================================
+20. STATUS
+==================================================
+
+Status deste documento: PRONTO PARA EXECUCAO.
+
+Proximo artefato recomendado:
+
+04. TELAS E FLUXOS

@@ -1,0 +1,508 @@
+﻿KINGSWORLD
+01. MVP FECHADO
+Escopo de Ferro da Temporada Base
+
+==================================================
+1. FINALIDADE
+==================================================
+
+Este documento trava o contrato do MVP de KingsWorld.
+
+Leitura correta de MVP neste projeto:
+
+MVP aqui nao significa uma demo minimalista.
+MVP aqui significa a primeira temporada completa e viavel do jogo, com todos os pilares centrais de gameplay funcionando de ponta a ponta.
+
+Objetivo:
+
+- definir exatamente o que entra na primeira versao jogavel do mundo;
+- impedir que o banco seja modelado em cima de um jogo capado demais;
+- congelar as regras centrais antes da etapa de dados;
+- separar gameplay obrigatorio de conteudo posterior.
+
+Regra de uso:
+
+Se um sistema for central para a fantasia e para a condicao de vitoria, derrota, guerra, logistica ou endgame, ele entra no MVP.
+Se for cosmetico, comercial, social secundario ou variante de configuracao, pode ficar fora.
+
+Este documento substitui qualquer leitura anterior de MVP enxuto.
+
+
+==================================================
+2. DEFINICAO DO MVP DE KINGSWORLD
+==================================================
+
+O MVP de KingsWorld precisa entregar uma temporada de 120 dias com todos os pilares centrais abaixo ativos:
+
+- conta global e lobby de mundos;
+- Capital, Colonias, Rei e Principe;
+- economia de 4 recursos;
+- governanca, ciencia, logistica e construcao;
+- exercito em 3 Tiers;
+- combate, espionagem, saque e conquista;
+- Tribos com cooperacao real;
+- Cidadela da Tribo;
+- Fase 2 completa como virada de meta;
+- Score de Poder e legado final.
+
+Em termos práticos:
+
+- o MVP precisa comecar;
+- o MVP precisa escalar;
+- o MVP precisa virar no Dia 91;
+- o MVP precisa encerrar e coroar vencedores.
+
+Se um desses pilares faltar, nao e o MVP correto de KingsWorld.
+
+
+==================================================
+3. PARAMETROS CONGELADOS DA TEMPORADA
+==================================================
+
+Estes parametros ficam travados no MVP:
+
+- duracao da temporada: 120 dias;
+- Fase 1: Dia 1 ao Dia 90;
+- Fase 2: Dia 91 ao Dia 120;
+- capacidade alvo do mundo: ate 50 jogadores;
+- limite de membros por Tribo: 6 jogadores;
+- tipos de aldeia jogavel: Capital e Colonia;
+- recursos base: Materiais, Suprimentos, Energia, Influencia;
+- atualizacao economica: delta time com resolucao por minuto;
+- mapa: grid persistente;
+- combate: formula matematica unica com ruptura, saque e efeitos de oficiais;
+- encerramento: ranking congelado no Dia 120.
+
+Se qualquer item acima mudar, o banco de dados precisa ser reavaliado.
+
+
+==================================================
+4. O QUE O MVP PRECISA TER
+==================================================
+
+4.1 Conta global e acesso
+
+Obrigatorio no MVP:
+
+- cadastro;
+- login;
+- recuperacao de senha;
+- perfil global basico;
+- sessao autenticada;
+- lobby com estados de mundo;
+- entrada e registro de jogador em mundo.
+
+4.2 Estrutura do imperio
+
+Obrigatorio no MVP:
+
+- 1 Capital inicial por jogador;
+- Colonias adicionais por fundacao e conquista;
+- nomeacao e gerenciamento de aldeias;
+- troca de aldeia ativa no header global;
+- leitura macro do imperio.
+
+Regra congelada:
+
+- Capital e o centro politico do imperio;
+- Colonias sao o motor economico e territorial;
+- uma Colonia pode ser promovida a nova Capital por sucessao, se cumprir requisitos;
+- perder territorio nao equivale automaticamente a perder o mundo;
+- o que define a eliminacao e a Coroa.
+
+4.3 Coroa, Rei, Principe e sucessao
+
+Obrigatorio no MVP:
+
+- Rei como unidade unica de sobrevivencia;
+- Principe como unidade de sucessao;
+- localizacao atual do Rei;
+- localizacao atual do Principe;
+- regra de morte do Rei;
+- regra de sucessao de Capital.
+
+Regra congelada:
+
+- se o Rei morrer e nao houver sucessao valida, o jogador e eliminado;
+- se o Rei morrer, mas o Principe estiver seguro em Colonia apta, a sucessao pode ocorrer;
+- a nova Capital so nasce se a Colonia cumprir requisitos minimos de infraestrutura;
+- se a Colonia do Principe ainda nao estiver apta, o jogador sobrevive em estado fragil e precisa reconstruir a funcao politica;
+- a localizacao do Rei nao e publica por padrao e depende de espionagem bem-sucedida.
+
+Resolucao de contradicao do GDD:
+
+- a Capital nao pode ser anexada diretamente como premio de conquista;
+- ela pode ser devastada, perder funcao politica ou ser removida do imperio;
+- nesse caso, a sucessao passa a importar.
+
+4.4 Economia dos 4 recursos
+
+Obrigatorio no MVP:
+
+- Materiais;
+- Suprimentos;
+- Energia;
+- Influencia;
+- producao por minuto via delta time;
+- consumo continuo de Suprimentos por tropas;
+- custo de Energia para operacao de estruturas e sistemas;
+- uso de Influencia em expansao, politicas e elite.
+
+Regra congelada:
+
+- Materiais constroem e recrutam;
+- Suprimentos sustentam exercitos e cercos;
+- Energia limita operacao, infraestrutura e capacidade de acao;
+- Influencia e o gargalo politico principal do jogo.
+
+Regra de saque:
+
+- Materiais e Suprimentos sao saqueaveis;
+- Energia e Influencia nao entram como loot direto comum, mas continuam existindo como estados economicos centrais.
+
+4.5 Edificios e upgrades obrigatorios
+
+Obrigatorio no MVP:
+
+- Palacio;
+- Senado;
+- Minas / Extratores;
+- Complexo Industrial;
+- Fazendas / Campos;
+- Fazenda Matriz / Agronegocio;
+- Habitacoes;
+- Distrito Metropolitano;
+- Centro de Pesquisa;
+- Malha Viaria Imperial;
+- Quartel;
+- Arsenal;
+- Muralha;
+- Bastiao;
+- Maravilha / Obelisco / Monumento.
+
+Regra congelada:
+
+- Palacio gera a base politica da aldeia;
+- Senado multiplica a producao politica do mid game;
+- os upgrades economicos avancados consomem muita Energia;
+- Malha Viaria Imperial reduz drasticamente o tempo entre territorios proprios;
+- Bastiao e a protecao critica da Coroa;
+- Maravilha e objetivo caro de legado e pico de Influencia.
+
+4.6 Ciencia
+
+Obrigatorio no MVP:
+
+- ciencia global por jogador dentro do mundo;
+- pesquisa por tempo;
+- arvore com impacto real no imperio inteiro.
+
+Ramos obrigatorios:
+
+- Economia;
+- Logistica;
+- Exercito;
+- Espionagem;
+- Resistencia Apocaliptica;
+- Governanca.
+
+Regra congelada:
+
+- pesquisa concluida afeta todas as aldeias do jogador;
+- ciencia nao e local por aldeia;
+- o jogador precisa poder seguir estilos de imperio diferentes via ciencia.
+
+4.7 Sistema militar completo
+
+Obrigatorio no MVP:
+
+Tier 1
+- Rei;
+- Principe.
+
+Tier 2
+- Lider de Guerra;
+- Heroi;
+- General;
+- Diplomata;
+- Espiao;
+- Engenheiro;
+- Agricultor.
+
+Tier 3
+- Milicia;
+- Atiradores;
+- Batedores;
+- Maquinario.
+
+Progressao obrigatoria de Tier 3:
+
+- Bronze;
+- Prata;
+- Ouro.
+
+Regra congelada:
+
+- Tier 2 nao luta sozinho e modifica a regra do tabuleiro;
+- Tier 3 e a massa de combate;
+- as versoes Bronze, Prata e Ouro alteram atributos e custo;
+- diplomacia militar, cerco, logistica civil e espionagem fazem parte do jogo base, nao de expansao.
+
+4.8 Movimentos e logistica de mapa
+
+Obrigatorio no MVP:
+
+- ataque;
+- apoio;
+- espionagem;
+- saque;
+- transporte de recursos;
+- envio de suprimentos;
+- retorno automatico;
+- tempos de viagem;
+- cronograma de movimentos.
+
+Regra congelada:
+
+- todo movimento tem origem, destino, payload, inicio, chegada e estado;
+- resolucao ocorre no servidor no momento exato;
+- General altera velocidade militar;
+- Agricultor altera eficiencia de logistica civil;
+- Malha Viaria Imperial altera deslocamento entre territorios proprios.
+
+4.9 Combate
+
+Obrigatorio no MVP:
+
+- calculo de Ataque Total do atacante;
+- calculo de Defesa Total do defensor;
+- bonus de Muralha e Bastiao;
+- bonus de oficiais Tier 2;
+- baixa total do lado mais fraco;
+- baixa proporcional do vencedor;
+- ruptura de defesa;
+- morte do Rei quando a aldeia e atravessada;
+- saque;
+- conversao de Colonia por Diplomata;
+- dano estrutural por Engenheiro;
+- relatorio de batalha.
+
+Regra congelada:
+
+- o combate base continua matematico e legivel;
+- oficiais alteram o resultado sem transformar o sistema em caos opaco;
+- muralhas importam;
+- numero puro nao substitui logistica;
+- defesa precisa ser competitiva.
+
+4.10 Tribos e cooperacao
+
+Obrigatorio no MVP:
+
+- criacao de Tribo;
+- convite e entrada;
+- limite fixo de 6 membros;
+- visao compartilhada de relatorios;
+- mercado interno de doacao;
+- guarnicao de apoio;
+- score coletivo da Tribo.
+
+Regra congelada:
+
+- Tribos pequenas sao parte do balanceamento base do mundo;
+- apoio militar entre aliados e sistema essencial;
+- inteligencia compartilhada entre membros faz parte do core loop diplomatico.
+
+4.11 Cidadela da Tribo
+
+Obrigatorio no MVP:
+
+- uma Cidadela por Tribo;
+- doacoes coletivas para construir;
+- estado de progresso da obra;
+- bonus passivos para os membros;
+- ataque inimigo contra a Cidadela;
+- destruicao da Cidadela;
+- Colapso de Tribo como consequencia sistemica.
+
+Regra congelada:
+
+- a Cidadela e o grande alvo coletivo do mid e endgame;
+- destruir a Cidadela precisa gerar perda real de poder;
+- o Colapso remove bonus e aplica debuff temporario relevante;
+- a Cidadela nao e decoracao, e estrutura central de guerra e cooperacao.
+
+4.12 Fase 2 completa
+
+A Fase 2 inteira entra no MVP.
+
+Obrigatorio no MVP:
+
+- bloqueio de fundacao de novas aldeias a partir do Dia 91;
+- Catastrofes Naturais;
+- Tributos do Servidor;
+- Protocolos de Sobrevivencia;
+- Hordas NPC contra jogadores;
+- Hordas pesadas contra Cidadelas;
+- escalonamento das ameacas por score do alvo;
+- pressao simultanea PvE + PvP.
+
+Protocolos obrigatorios no MVP:
+
+- Sacrificio / Desconstrucao;
+- Foco Direcionado.
+
+Regra congelada:
+
+- a Fase 2 muda o meta de forma real;
+- o jogo deixa de ser apenas expansao PvP;
+- sobreviver ao servidor faz parte da condicao de vitoria;
+- jogadores fortes precisam ter incentivos para defender aliados e estruturas coletivas.
+
+4.13 Relatorios, inteligencia e notificacao interna
+
+Obrigatorio no MVP:
+
+- relatorio de batalha;
+- relatorio de espionagem;
+- relatorio de saque;
+- relatorio de apoio;
+- alertas de ataque;
+- alertas de horda;
+- alertas de tributo;
+- avisos de sistema sobre mudanca de fase.
+
+Regra congelada:
+
+- informacao faz parte do poder do jogador;
+- a localizacao do Rei so aparece mediante sucesso de inteligencia;
+- relatorios compartilhados de Tribo sao feature central.
+
+4.14 Score de Poder, vitoria e legado
+
+Obrigatorio no MVP:
+
+- Score de Poder individual em tempo real;
+- Score Total de Tribo;
+- vitoria individual no fim da temporada;
+- vitoria coletiva da Tribo;
+- encerramento de mundo no Dia 120;
+- legado salvo na conta global;
+- medalhas permanentes.
+
+Medalhas obrigatorias no MVP:
+
+- Soberano do Mundo;
+- Tribo Vencedora;
+- Sobrevivente do Apocalipse;
+- Top Apoiador;
+- destaque de legado militar ou politico.
+
+Regra congelada:
+
+- vencer depende de score e sobrevivencia;
+- o ranking final e travado no encerramento;
+- o legado precisa alimentar o desejo de voltar em novos mundos.
+
+
+==================================================
+5. O QUE PODE SER SIMPLIFICADO SEM SAIR DO MVP
+==================================================
+
+Todos os sistemas centrais acima entram.
+O que pode ser simplificado e a quantidade de conteudo, nao a existencia do sistema.
+
+Simplificacoes permitidas:
+
+- menos niveis de arvore de ciencia no lancamento;
+- menos tipos de catastrofe no lancamento;
+- menos medalhas no lancamento;
+- balanceamento inicial mais conservador;
+- menos variedade numerica de eventos da Fase 2;
+- menos texto social e menos luxo de interface.
+
+Simplificacoes proibidas:
+
+- remover Principe;
+- remover Cidadela;
+- remover Colapso de Tribo;
+- remover Protocolos;
+- remover Bronze, Prata e Ouro;
+- remover oficiais Tier 2 centrais;
+- remover a virada real da Fase 2.
+
+
+==================================================
+6. O QUE FICA FORA DO MVP
+==================================================
+
+Fica fora do MVP apenas o que nao e nucleo de gameplay:
+
+- skins de aldeia;
+- skins de Rei;
+- banners premium;
+- customizacao visual profunda do perfil;
+- monetizacao expandida;
+- loja cosmetica;
+- mundos privados;
+- configuracao customizada de mundo por usuario;
+- integrações sociais externas;
+- chat global complexo;
+- sistema de creator worlds;
+- eventos sazonais especiais fora da temporada base.
+
+Regra de corte:
+
+Nada desta lista pode ser requisito para o jogo funcionar como KingsWorld.
+
+
+==================================================
+7. CONSEQUENCIA DIRETA PARA O BANCO
+==================================================
+
+O banco de dados da primeira modelagem ja precisa nascer preparado para:
+
+- Rei e Principe;
+- sucessao de Capital;
+- estados politicos da aldeia;
+- Cidadela e Colapso de Tribo;
+- oficiais Tier 2 completos;
+- tropas Tier 3 com grau Bronze, Prata e Ouro;
+- eventos globais de Fase 2;
+- Protocolos de Sobrevivencia;
+- movimentacao civil e militar;
+- score individual e coletivo;
+- relatorios e visibilidade de inteligencia.
+
+Se o banco ignorar esses pontos, ele nasce errado para o MVP real.
+
+
+==================================================
+8. CHECKLIST DE LOCK
+==================================================
+
+Este documento esta pronto para virar base de modelagem se todas as respostas abaixo forem sim:
+
+- o Principe entra no MVP?
+- a sucessao entra no MVP?
+- a Cidadela entra no MVP?
+- o Colapso de Tribo entra no MVP?
+- todos os oficiais Tier 2 entram no MVP?
+- Bronze, Prata e Ouro entram no MVP?
+- a Fase 2 completa entra no MVP?
+- Protocolos entram no MVP?
+- a Maravilha entra no MVP?
+- o legado final entra no MVP?
+
+Se a resposta for sim para tudo, o proximo passo e banco de dados.
+
+
+==================================================
+9. STATUS
+==================================================
+
+Status deste documento: PROPOSTA PRONTA PARA LOCK.
+
+Proximo artefato depois da aprovacao:
+
+02. BANCO DE DADOS

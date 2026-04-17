@@ -1,0 +1,74 @@
+<svg width="960" height="720" viewBox="0 0 960 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="islandBase" x1="480" y1="170" x2="480" y2="620" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B6D19D"/>
+      <stop offset="1" stop-color="#8BB874"/>
+    </linearGradient>
+    <linearGradient id="stoneWall" x1="480" y1="180" x2="480" y2="560" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F0F4FA"/>
+      <stop offset="1" stop-color="#C7D2E3"/>
+    </linearGradient>
+    <linearGradient id="roofTile" x1="480" y1="170" x2="480" y2="360" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F49B55"/>
+      <stop offset="1" stop-color="#D26A2C"/>
+    </linearGradient>
+    <radialGradient id="groundShadow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(480 610) rotate(90) scale(40 300)">
+      <stop stop-color="#4A6F5A" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#4A6F5A" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <ellipse cx="480" cy="610" rx="300" ry="40" fill="url(#groundShadow)"/>
+
+  <path d="M160 420L480 260L800 420L480 590L160 420Z" fill="url(#islandBase)"/>
+  <path d="M160 420V468L480 636V590L160 420Z" fill="#7CA264"/>
+  <path d="M800 420V468L480 636V590L800 420Z" fill="#6B915A"/>
+
+  <path d="M280 360H680V520H280V360Z" fill="url(#stoneWall)" stroke="#9FB0C8" stroke-width="8"/>
+  <rect x="416" y="436" width="128" height="84" rx="12" fill="#ABBCD3"/>
+  <rect x="448" y="454" width="64" height="66" rx="10" fill="#6B7F9D"/>
+
+  <path d="M260 360L360 286H600L700 360H260Z" fill="url(#roofTile)"/>
+  <path d="M360 286L480 214L600 286H360Z" fill="#C95E21"/>
+  <path d="M480 214L510 244L480 266L450 244L480 214Z" fill="#F9C79D"/>
+
+  <g>
+    <circle cx="300" cy="330" r="56" fill="url(#stoneWall)" stroke="#9FB0C8" stroke-width="8"/>
+    <circle cx="660" cy="330" r="56" fill="url(#stoneWall)" stroke="#9FB0C8" stroke-width="8"/>
+    <circle cx="372" cy="284" r="52" fill="url(#stoneWall)" stroke="#9FB0C8" stroke-width="8"/>
+    <circle cx="588" cy="284" r="52" fill="url(#stoneWall)" stroke="#9FB0C8" stroke-width="8"/>
+  </g>
+
+  <g fill="#D26A2C">
+    <path d="M264 284L300 238L336 284H264Z"/>
+    <path d="M624 284L660 238L696 284H624Z"/>
+    <path d="M340 240L372 198L404 240H340Z"/>
+    <path d="M556 240L588 198L620 240H556Z"/>
+  </g>
+
+  <g fill="#E84545">
+    <path d="M299 214H307V240H299V214Z"/>
+    <path d="M307 214L328 221L307 228V214Z"/>
+    <path d="M659 214H667V240H659V214Z"/>
+    <path d="M667 214L688 221L667 228V214Z"/>
+    <path d="M371 172H379V198H371V172Z"/>
+    <path d="M379 172L400 179L379 186V172Z"/>
+    <path d="M587 172H595V198H587V172Z"/>
+    <path d="M595 172L616 179L595 186V172Z"/>
+  </g>
+
+  <g>
+    <circle cx="212" cy="430" r="32" fill="#4D8A57"/>
+    <circle cx="212" cy="398" r="26" fill="#5DA567"/>
+    <rect x="206" y="432" width="12" height="32" fill="#6D4B2C"/>
+
+    <circle cx="748" cy="438" r="32" fill="#4D8A57"/>
+    <circle cx="748" cy="406" r="26" fill="#5DA567"/>
+    <rect x="742" y="440" width="12" height="32" fill="#6D4B2C"/>
+
+    <circle cx="278" cy="496" r="28" fill="#4D8A57"/>
+    <circle cx="682" cy="506" r="28" fill="#4D8A57"/>
+  </g>
+
+  <path d="M410 522L550 522L620 560L480 598L340 560L410 522Z" fill="#BDCFB0" opacity="0.65"/>
+</svg>

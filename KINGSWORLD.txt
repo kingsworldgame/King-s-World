@@ -1,0 +1,1272 @@
+﻿KINGSWORLD
+Game Design Document Base + Especificacao de MVP
+
+==================================================
+1. VISAO DO PRODUTO
+==================================================
+
+KingsWorld e um Persistent Browser Game (PBPG) de estrategia competitiva com foco em:
+
+- gestao de imperio em tempo real;
+- guerra PvP orientada por logistica;
+- temporadas com comeco, meio e fim claros;
+- interface leve, textual e altamente legivel;
+- sensacao premium de "dashboard de guerra", sem depender de graficos pesados.
+
+Referencia de sensacao:
+
+- Tribal Wars / OGame na leitura e progressao;
+- grand strategy na tomada de decisao;
+- MMO assincrono na disputa de territorio, aliancas e legado.
+
+Pitch curto:
+
+"KingsWorld e um jogo de guerra persistente em navegador onde o jogador precisa expandir, sustentar e proteger sua Coroa por 120 dias. A fase inicial privilegia conquista e politica. A fase final transforma o proprio servidor no inimigo e forca cooperacao, sacrificio e sobrevivencia."
+
+
+==================================================
+2. IDENTIDADE DO JOGO
+==================================================
+
+Tema:
+
+- fantasia imperial com leitura limpa;
+- tom de soberania, comando, estrategia e legado;
+- menos "idade media suja", mais "imperio organizado sob pressao".
+
+Promessa ao jogador:
+
+- cada aldeia importa;
+- cada deslocamento tem custo real;
+- a defesa do Rei e da Capital define sua sobrevivencia;
+- sobreviver ate o fim vale tanto quanto dominar cedo;
+- o fim do mundo nao premia apenas o mais agressivo, mas o mais completo.
+
+
+==================================================
+3. PILARES DE DESIGN
+==================================================
+
+1. Persistencia com pressao constante
+O mundo nao reinicia a cada partida curta. O jogador constroi um imperio que existe continuamente durante a temporada e precisa reagir a ataques, fome, expansao e eventos globais.
+
+2. Estrategia baseada em logistica
+Ganhar nao depende so de ter mais tropas. Depende de manter suprimentos, energia, influencia, rotas, apoio de tribo e tempo de viagem.
+
+3. Hierarquia territorial clara
+Capital e Colonias exercem papeis diferentes. A Capital e o centro politico. As Colonias alimentam, sustentam e projetam poder.
+
+4. Fase final que muda o meta
+O jogo nao termina num snowball previsivel. A Fase 2 transforma o servidor numa ameaca ativa e pune imperios desbalanceados.
+
+5. Interface limpa e informativa
+A experiencia precisa ser rapida de ler, facil de operar em celular e forte em relatorios, status e alertas.
+
+
+==================================================
+4. LOOP CENTRAL DO JOGADOR
+==================================================
+
+Loop macro:
+
+1. Produzir Materiais, Suprimentos, Energia e Influencia.
+2. Evoluir edificios e ciencia.
+3. Treinar exercitos e oficiais.
+4. Expandir para novas Colonias.
+5. Mover recursos e tropas entre territorios.
+6. Atacar, defender, espionar e negociar.
+7. Proteger a Coroa e acumular Score de Poder.
+8. Sobreviver ao Apocalipse e encerrar a temporada no topo.
+
+Loop curto de sessao:
+
+1. Entrar no mundo.
+2. Ver alertas, movimentos e cronometros.
+3. Trocar entre aldeias.
+4. Resolver gargalos de economia.
+5. Emitir ordens militares, civis ou politicas.
+6. Revisar relatorios.
+7. Preparar a proxima janela de risco.
+
+
+==================================================
+5. CONTA GLOBAL E MUNDOS
+==================================================
+
+5.1 Conta global
+
+Cada jogador possui uma conta global com:
+
+- username unico;
+- e-mail;
+- senha com hash seguro;
+- perfil publico;
+- score acumulado entre mundos;
+- medalhas permanentes;
+- historico de temporadas.
+
+5.2 Login e sessao
+
+Requisitos:
+
+- autenticacao segura;
+- sessao stateless com token;
+- fluxo de recuperacao de senha;
+- validacao server-side em toda acao sensivel.
+
+5.3 Lobby de mundos
+
+Ao entrar, o jogador visualiza todos os mundos disponiveis.
+
+Estados do mundo:
+
+- Em Aberto: inscricoes liberadas, temporada ainda nao iniciou.
+- Em Andamento: mundo ativo.
+- Finalizado: leitura de ranking, relatorios e vencedores.
+
+Acoes do jogador:
+
+- Entrar no Mundo;
+- Registrar no Mundo;
+- Ver detalhes da temporada;
+- Ver historico de vencedores.
+
+5.4 Estado do jogador dentro do mundo
+
+Ao entrar em um mundo, o sistema carrega:
+
+- aldeias vinculadas ao jogador;
+- status de vida;
+- posicao do Rei;
+- tribo atual;
+- score no mundo;
+- fila de construcoes;
+- movimentos militares e civis;
+- resumo agregado de economia.
+
+
+==================================================
+6. ESTRUTURA DA TEMPORADA
+==================================================
+
+Duracao padrao:
+
+- 120 dias.
+
+Capacidade alvo do mundo:
+
+- ate 50 jogadores ativos, com foco em densidade politica e conflito real.
+
+Fase 1: Expansao (Dia 1 ao Dia 90)
+
+- foco em crescimento, disputa territorial, espionagem, diplomacia e guerra entre jogadores;
+- fundacao e conquista de Colonias liberadas;
+- tribos se consolidam;
+- ciencia e infraestrutura definem o mid game.
+
+Fase 2: Apocalipse (Dia 91 ao Dia 120)
+
+- fundacao de novas aldeias bloqueada;
+- servidor passa a gerar ameacas PvE;
+- hordas, tributos e eventos globais pressionam todos os jogadores;
+- cooperacao deixa de ser opcional;
+- o mundo converge para sobrevivencia, score e legado.
+
+Encerramento:
+
+- o mundo fecha no Dia 120;
+- rankings sao congelados;
+- medalhas e score de legado sao distribuidos;
+- relatorios permanecem consultaveis.
+
+
+==================================================
+7. CONDICOES DE SOBREVIVENCIA, DERROTA E VITORIA
+==================================================
+
+7.1 A Coroa
+
+O jogador e representado por uma unidade unica: o Rei.
+
+Regras:
+
+- o Rei pode ficar estacionado em qualquer aldeia propria;
+- a aldeia que abriga o Rei vira o ponto critico do imperio;
+- se a defesa daquela aldeia for quebrada e o ataque atravessar a protecao, o Rei morre.
+
+7.2 Game Over
+
+O jogador e eliminado instantaneamente se:
+
+- o Rei morrer sem sucessao valida; ou
+- perder a ultima aldeia operacional.
+
+7.3 O Principe e a sucessao
+
+O Principe funciona como seguro politico do imperio.
+
+Regra de sucessao:
+
+- se o Rei morrer ou a Capital perder funcao politica;
+- e o Principe estiver seguro em uma Colonia valida;
+- essa aldeia pode assumir a nova Capital, desde que cumpra os requisitos minimos.
+
+Se os requisitos ainda nao existirem:
+
+- o jogador sobrevive temporariamente;
+- mas opera em estado fragil ate restaurar a Capital.
+
+7.4 Vitoria individual
+
+Ao fim do Dia 120, o jogador sobrevivente com maior Score de Poder e coroado Soberano do Mundo.
+
+7.5 Vitoria coletiva
+
+A Tribo com maior Score Total ao fim da temporada vence coletivamente.
+
+7.6 Filosofia de vitoria
+
+KingsWorld nao premia apenas expansao cega.
+O vencedor ideal combina:
+
+- sobrevivencia;
+- economia estavel;
+- guerra eficiente;
+- participacao em objetivos coletivos;
+- desempenho sob pressao no endgame.
+
+
+==================================================
+8. ESTRUTURA DO IMPERIO
+==================================================
+
+8.1 Capital
+
+A Capital e o centro politico do jogador.
+
+Funcoes:
+
+- gera a Influencia base;
+- abriga a estrutura de governanca;
+- concentra upgrades politicos;
+- permite desbloqueios de expansao;
+- sustenta a identidade do imperio.
+
+Diretrizes de design:
+
+- mais resiliente que uma Colonia comum;
+- storage e muralha acima da media;
+- coracao do progresso politico;
+- alvo prioritario de sabotagem e pressao.
+
+8.2 Colonias
+
+As Colonias sao o motor economico e territorial do imperio.
+
+Funcoes:
+
+- extracao regional;
+- suporte logistico;
+- treinamento militar descentralizado;
+- pontos de avancada, defesa e saque;
+- reserva para sucessao, quando preparadas.
+
+8.3 Regra de controle territorial
+
+O jogador cresce por:
+
+- fundacao;
+- conquista;
+- diplomacia coercitiva;
+- consolidacao de rotas e apoio.
+
+O mapa precisa valorizar:
+
+- distancia;
+- choke points;
+- distribuicao de biomas;
+- profundidade de fronteira.
+
+
+==================================================
+9. ECONOMIA: OS 4 RECURSOS
+==================================================
+
+KingsWorld abandona o trio tradicional madeira, pedra e ferro e trabalha com 4 recursos estrategicos.
+
+9.1 Materiais
+
+Representam a materia-prima fisica do imperio.
+
+Uso principal:
+
+- construir edificios;
+- forjar tropas;
+- reparar infraestrutura;
+- contribuir em obras coletivas.
+
+9.2 Suprimentos
+
+Representam sustento e manutencao continua.
+
+Uso principal:
+
+- upkeep do exercito;
+- sustentacao de guarnicoes;
+- resistencia a cercos e eventos de fome;
+- tributacao de crises.
+
+Consequencia de deficit:
+
+- desertao;
+- ineficiencia militar;
+- colapso gradual do exercito.
+
+9.3 Energia
+
+Representa mao de obra, capacidade operacional e folego produtivo.
+
+Uso principal:
+
+- ativar edificios avancados;
+- suportar ordens simultaneas;
+- manter cadeias de producao complexas;
+- alimentar ciencia e infraestrutura pesada.
+
+Consequencia de deficit:
+
+- predios operam abaixo do potencial;
+- ordens podem ser travadas;
+- crescimento desacelera drasticamente.
+
+9.4 Influencia
+
+E o recurso politico supremo do jogo.
+
+Uso principal:
+
+- expansao de limites de construcao;
+- fundacao de novas aldeias;
+- recrutamento de oficiais Tier 2;
+- desbloqueios politicos;
+- resposta a mecanicas de fim de jogo;
+- objetivos de prestigio.
+
+Diretriz:
+
+- Influencia deve ser rara, lenta e desejada;
+- sua escassez e uma das maiores fontes de decisao estrategica.
+
+
+==================================================
+10. EDIFICIOS E INFRAESTRUTURA
+==================================================
+
+10.1 Governanca
+
+Palacio
+
+- coracao da aldeia;
+- gera Influencia base;
+- dita o teto politico do territorio;
+- abriga a Coroa.
+
+Senado
+
+- evolucao mid game do nucleo politico;
+- multiplica Influencia;
+- fortalece a administracao imperial.
+
+10.2 Economia de base
+
+Minas / Extratores
+
+- geram Materiais.
+
+Complexo Industrial
+
+- upgrade de escala regional;
+- aumenta a extracao total;
+- custa muita Energia.
+
+Fazendas / Campos
+
+- geram Suprimentos.
+
+Fazenda Matriz / Agronegocio
+
+- fortalece o sustento do imperio;
+- indispensavel para exercitos grandes.
+
+Habitacoes
+
+- geram Energia / mao de obra.
+
+Distrito Metropolitano
+
+- salto estrutural de Energia;
+- permite sustentar predios e sistemas de alto custo.
+
+10.3 Ciencia e conexao imperial
+
+Centro de Pesquisa
+
+- consome Energia;
+- libera ciencia global;
+- afeta todas as aldeias do jogador.
+
+Malha Viaria Imperial
+
+- projeto caro e tardio;
+- reduz drasticamente tempo de viagem entre territorios proprios;
+- transforma um conjunto de aldeias em um imperio de verdade.
+
+10.4 Militar e defesa
+
+Quartel
+
+- produz tropas Tier 3;
+- exige Materiais e pressiona Suprimentos.
+
+Arsenal
+
+- produz oficiais e unidades especiais Tier 2;
+- consome Materiais, Energia e Influencia.
+
+Muralha
+
+- defesa base da aldeia.
+
+Bastiao
+
+- evolucao maxima da defesa;
+- aumenta resistencia e capacidade de segurar o Rei;
+- elemento critico para Fase 2.
+
+10.5 Legado e endgame
+
+Maravilha / Obelisco / Monumento
+
+- obra suprema de prestigio;
+- demanda enorme volume de recursos;
+- injeta grande quantidade de Influencia ao finalizar;
+- amplia multiplicadores de medalhas e legado.
+
+
+==================================================
+11. ARVORE DE CIENCIA
+==================================================
+
+A ciencia deve ser global por jogador, nao local por aldeia.
+
+Isso gera tres efeitos positivos:
+
+- reduz microgerenciamento repetitivo;
+- acelera entendimento do jogador;
+- permite diferenciar estilos de imperio.
+
+Eixos sugeridos de pesquisa:
+
+- economia;
+- logistica;
+- exercito;
+- espionagem;
+- resistencia apocaliptica;
+- governanca.
+
+Exemplos de bonus:
+
+- mais producao por nivel de edificio;
+- menor consumo de Suprimentos;
+- maior velocidade de marcha;
+- desbloqueio de tiers superiores;
+- bonus de muralha;
+- eficiencia em doacoes para Cidadela.
+
+
+==================================================
+12. SISTEMA MILITAR
+==================================================
+
+A guerra opera em 3 Tiers.
+
+12.1 Tier 1: A Coroa
+
+Rei
+
+- unidade unica do jogador;
+- nao existe para dano direto;
+- existe para representar soberania e condicao de sobrevivencia.
+
+Principe
+
+- unidade politica de sucessao;
+- aumenta profundidade estrategica do imperio;
+- serve como seguro de continuidade.
+
+12.2 Tier 2: Oficiais e especialistas
+
+Custam caro, nao funcionam sozinhos e alteram as regras do combate ou da logistica.
+
+Lider de Guerra
+
+- aumenta o poder ofensivo das tropas Tier 3 do exercito que acompanha.
+
+Heroi
+
+- ancora ataques decisivos e defesas criticas;
+- concede bonus de elite.
+
+General
+
+- reduz tempo de viagem de exercitos;
+- melhora projecao de poder no mapa.
+
+Diplomata
+
+- unidade capaz de converter ou anexar Colonias inimigas em ataques bem-sucedidos.
+
+Espiao
+
+- revela tropas, edificios e possivel presenca do Rei.
+
+Engenheiro
+
+- rebaixa construcoes inimigas quando o cerco vence.
+
+Agricultor
+
+- lidera caravanas de Suprimentos;
+- sustenta cercos e salva aliados da fome.
+
+12.3 Tier 3: O exercito
+
+Milicia
+
+- infantaria barata;
+- segura linha e absorve perdas.
+
+Atiradores
+
+- dano a distancia;
+- muito fortes na defesa atras de muralhas.
+
+Batedores
+
+- mobilidade alta;
+- bons para saque, choque rapido e reconhecimento.
+
+Maquinario
+
+- artilharia pesada;
+- lento e caro;
+- essencial para quebrar muralhas e vencer objetivos fortificados.
+
+Evolucao de tropas:
+
+- Bronze;
+- Prata;
+- Ouro.
+
+Cada grau melhora atributos matematicos e custo.
+
+
+==================================================
+13. RESOLUCAO DE COMBATE
+==================================================
+
+O combate deve ser simples de explicar e profundo na preparacao.
+
+13.1 Fase 1: Calculo de poder
+
+Forca do Atacante:
+
+Ataque Total de tropas Tier 3
++ bonus percentual de Lider de Guerra
++ modificadores contextuais ativos
+
+Forca do Defensor:
+
+Defesa Total de tropas Tier 3
++ bonus de Muralha ou Bastiao
++ bonus de Heroi ou unidade defensiva Tier 2
++ modificadores contextuais ativos
+
+13.2 Fase 2: Choque e baixas
+
+Regra base:
+
+- o lado com menor forca perde 100 por cento do exercito envolvido;
+- o vencedor tambem sofre baixas proporcionais a forca do derrotado.
+
+Formula recomendada:
+
+- taxa_de_baixa_do_vencedor = forca_perdedor / forca_vencedor
+- sobreviventes = quantidade_inicial * (1 - taxa_de_baixa_do_vencedor)
+
+Exemplo:
+
+- atacante: 1000 de forca;
+- defensor: 500 de forca;
+- defensor perde tudo;
+- atacante perde 50 por cento do que enviou.
+
+13.3 Fase 3: Efeito de ruptura
+
+Se o atacante vence e rompe a defesa:
+
+1. Verificacao da Coroa
+- se o Rei estava na aldeia e nao havia sucessao valida, ocorre Game Over.
+
+2. Saque
+- sobreviventes carregam Materiais e Suprimentos.
+
+3. Efeitos de oficiais
+- Diplomata converte a Colonia, se as condicoes forem satisfeitas;
+- Engenheiro derruba niveis de edificios;
+- Espiao pode gerar relatorio aprofundado;
+- outras futuras habilidades podem ser encaixadas aqui.
+
+13.4 Principios de balanceamento
+
+- oficiais nunca substituem exercitos;
+- muralhas devem importar;
+- numero puro vence, mas logistica decide se o numero chega vivo;
+- defesa precisa ser viavel;
+- ataque coordenado deve ser recompensado;
+- informacao incompleta e parte do jogo.
+
+
+==================================================
+14. ALIANCAS, TRIBOS E CIDADELA
+==================================================
+
+14.1 Limite de membros
+
+Como o mundo tem baixa populacao comparado a MMOs massivos, as Tribos precisam ter limite rigido.
+
+Faixa recomendada:
+
+- 5 a 8 jogadores por Tribo.
+
+Objetivo:
+
+- impedir blocos gigantescos;
+- manter pluralidade politica;
+- forcar diplomacia e ruptura de pactos.
+
+14.2 Vantagens de Tribo
+
+Mercado Interno
+
+- envio de Materiais e Suprimentos a aliados.
+
+Guarnicao de Apoio
+
+- tropas podem defender aldeias de membros da mesma Tribo;
+- isso fortalece defesa coletiva e cria custo real de coordenacao.
+
+Visao Compartilhada
+
+- relatorios de batalha e espionagem podem ser compartilhados internamente.
+
+14.3 A Cidadela da Tribo
+
+A Cidadela e a obra coletiva e o maior alvo politico da alianca.
+
+Regras:
+
+- construida por doacoes massivas de recursos;
+- existe como megaestrutura unica da Tribo;
+- concede bonus passivos para todos os membros;
+- se destruida, gera Colapso da Tribo.
+
+Consequencias do Colapso:
+
+- perda de bonus coletivos;
+- debuff temporario relevante;
+- abertura de janela para dominacao inimiga;
+- possivel dissolucao forcada, dependendo do balanceamento final.
+
+
+==================================================
+15. FASE 2: APOCALIPSE E PVE
+==================================================
+
+Na Fase 2, o proprio servidor vira antagonista.
+
+15.1 Catastrofes e tributos
+
+Exemplos:
+
+- inverno arido;
+- colapso energetico;
+- peste logistica;
+- seca imperial.
+
+Funcionamento:
+
+- evento global com contagem regressiva;
+- jogadores ou Tribos precisam pagar determinado tributo;
+- quem falha sofre penalidades reais.
+
+Penalidades possiveis:
+
+- morte parcial do exercito;
+- queda de producao;
+- travamento de edificios;
+- perda de moral;
+- vulnerabilidade ampliada a hordas.
+
+15.2 Protocolos de sobrevivencia
+
+Mecanicas de crise que permitem trocas duras.
+
+Sacrificio / Desconstrucao
+
+- o jogador rebaixa edificios para recuperar recursos imediatos.
+
+Foco Direcionado
+
+- desliga um eixo economico para impulsionar outro temporariamente.
+
+Exemplo:
+
+- zerar geracao de Influencia para dobrar resposta defensiva.
+
+15.3 Hordas NPC
+
+Tipos de pressao:
+
+- ataques globais basicos contra todos os jogadores;
+- hordas escaladas de acordo com o score do alvo;
+- cercos brutais direcionados a Cidadelas.
+
+Objetivo de design:
+
+- expulsar quem ignorou defesa;
+- obrigar os fortes a ajudar aliados;
+- abrir janelas de vulnerabilidade PvP durante a defesa do PvE.
+
+
+==================================================
+16. SCORE DE PODER E LEGADO
+==================================================
+
+O Score de Poder precisa refletir um imperio funcional, nao apenas uma metrica unica.
+
+Componentes sugeridos:
+
+- territorio controlado;
+- forca militar viva;
+- influencia acumulada e gasta em marcos importantes;
+- edificios chave;
+- contribuicao para Cidadela;
+- vitorias em combate;
+- sobrevivencia em eventos do fim do mundo;
+- apoio relevante a aliados.
+
+Legado global:
+
+- medalhas permanentes no perfil;
+- marcas de mundo vencido;
+- titulos por categoria;
+- historico consultavel entre temporadas.
+
+Exemplos de medalha:
+
+- Soberano do Mundo;
+- Sobrevivente do Apocalipse;
+- Coluna da Tribo;
+- Arquiteto da Cidadela;
+- Predador de Fronteira.
+
+
+==================================================
+17. UX, NAVEGACAO E DIRECAO VISUAL
+==================================================
+
+17.1 Estrutura de navegacao
+
+Header fixo
+
+- seletor de aldeia sempre visivel;
+- mostra recursos da aldeia atual;
+- muda o contexto de toda a interface.
+
+Bottom navigation com 5 pilares
+
+1. Imperio
+- lista de aldeias em cards limpos;
+- permite renomear;
+- mostra status rapido de economia, nivel politico e perigo.
+
+2. Operacoes
+- metade ciencia;
+- metade cronograma;
+- fila de construcao, treinamento e movimentos.
+
+3. Base
+- tela central e principal;
+- visual da aldeia atual;
+- edificios clicaveis;
+- modais rapidos de acao.
+
+4. Tabuleiro
+- mapa em grid;
+- diplomacia, guerra, espionagem e leitura territorial.
+
+5. Inteligencia
+- relatorios de batalha;
+- mensagens;
+- alertas do sistema;
+- notificacoes criticas.
+
+17.2 Direcao visual
+
+Objetivo:
+
+- leitura premium;
+- leveza;
+- alta densidade de informacao sem poluicao.
+
+Diretrizes:
+
+- fundos claros e sofisticados;
+- contraste alto para numeros;
+- visual de vidro fosco somente em camadas fixas e modais;
+- cards comuns sem blur pesado;
+- desempenho mobile tratado como requisito de produto, nao detalhe tecnico.
+
+17.3 Filosofia de UX
+
+- jogador nunca deve perder contexto da aldeia ativa;
+- abrir uma acao deve ser mais comum do que trocar de pagina;
+- relatorio bom vale tanto quanto efeito visual bonito;
+- tudo importante precisa caber bem no celular.
+
+
+==================================================
+18. ARQUITETURA DE BACKEND
+==================================================
+
+18.1 Stack sugerida
+
+- PostgreSQL como base relacional;
+- Supabase pode acelerar auth, banco e realtime;
+- task runner para movimentos e resolucoes temporizadas;
+- API server-side com validacao total das regras.
+
+18.2 Modelo de dados inicial
+
+Users
+
+- id
+- username
+- email
+- password_hash
+- global_score
+- profile_meta
+
+Worlds
+
+- id
+- name
+- status
+- day_number
+- phase
+- started_at
+- ends_at
+
+WorldPlayers
+
+- id
+- world_id
+- user_id
+- tribe_id
+- is_alive
+- power_score
+- king_village_id
+- prince_village_id
+
+Villages
+
+- id
+- world_id
+- owner_world_player_id
+- name
+- type
+- x
+- y
+- is_capital
+- status
+
+VillageResources
+
+- village_id
+- materials
+- supplies
+- energy
+- influence
+- last_update_at
+
+Buildings
+
+- id
+- village_id
+- type
+- level
+- started_at
+- completes_at
+
+Troops
+
+- id
+- village_id
+- type
+- tier
+- grade
+- quantity
+
+Movements
+
+- id
+- world_id
+- origin_village_id
+- target_village_id
+- movement_type
+- payload_json
+- started_at
+- arrival_at
+- return_at
+- status
+
+Reports
+
+- id
+- world_id
+- owner_world_player_id
+- report_type
+- title
+- body_json
+- created_at
+- visibility_scope
+
+Tribes
+
+- id
+- world_id
+- name
+- citadel_state
+- total_score
+
+18.3 Tick economico
+
+Regra central:
+
+Nao atualizar o banco a cada segundo.
+Usar delta time.
+
+Formula base:
+
+recurso_atual = recurso_armazenado
+               + (producao_por_minuto * minutos_passados)
+               - (consumo_por_minuto * minutos_passados)
+
+Atualizar apenas quando:
+
+- jogador abre a aldeia;
+- jogador executa uma acao;
+- um evento programado exige reconciliacao;
+- um processo de manutencao roda.
+
+18.4 Resolucoes temporizadas
+
+Ao criar um movimento:
+
+- salvar horario de chegada;
+- um worker processa os movimentos vencidos;
+- ao vencer o tempo, dispara a regra correta:
+  - combate;
+  - apoio;
+  - espionagem;
+  - transporte;
+  - retorno.
+
+18.5 Integridade e anti-cheat
+
+- toda regra de tempo validada no servidor;
+- cliente nunca decide estado final;
+- localizacao do Rei protegida por regra de visibilidade;
+- espionagem precisa gerar acesso limitado e rastreavel;
+- relatorios e logs devem permitir auditoria de eventos criticos.
+
+
+==================================================
+19. ESCOPO DO MVP
+==================================================
+
+O MVP precisa provar que o loop principal funciona e que o jogo sustenta uma temporada curta.
+
+19.1 O que entra no MVP
+
+- conta global com login;
+- lobby de mundos;
+- registro do jogador em um mundo;
+- Capital inicial e Colonias;
+- geracao dos 4 recursos;
+- edificios basicos;
+- fila de construcao;
+- ciencia global inicial;
+- tropas Tier 3;
+- pelo menos 3 oficiais Tier 2 essenciais:
+  - Lider de Guerra;
+  - Diplomata;
+  - Espiao;
+- mapa em grid;
+- movimentos e cronometros;
+- ataque, apoio, espionagem e saque;
+- relatorios;
+- tribos com limite de membros;
+- mercado interno e guarnicao;
+- Score de Poder basico;
+- Fase 2 simplificada com hordas e um tributo global;
+- fechamento de mundo e distribuicao de medalhas.
+
+19.2 O que pode ficar para V1.1 ou V2
+
+- Principe com sucessao completa;
+- Cidadela completa com colapso detalhado;
+- Protocolos de Sobrevivencia avancados;
+- catastrofes variadas;
+- Maravilha final;
+- skins completas;
+- mundos privados configuraveis;
+- monetizacao expandida;
+- eventos sazonais especiais.
+
+19.3 Meta de qualidade do MVP
+
+O MVP nao precisa ser gigante.
+Precisa ser:
+
+- legivel;
+- consistente;
+- dificil de explorar;
+- divertido nas primeiras 2 semanas;
+- promissor no mid game;
+- brutal e memoravel no endgame.
+
+
+==================================================
+20. MONETIZACAO
+==================================================
+
+Monetizacao deve preservar competitividade.
+Nada de pay-to-win bruto.
+
+20.1 Personalizacao
+
+- skins de aldeia;
+- skins de Rei;
+- banners e molduras de perfil;
+- efeitos cosmeticos de legado.
+
+20.2 Mundos privados
+
+Modelo premium de longo prazo:
+
+- aluguel ou criacao de mundo customizado;
+- configuracao de velocidade, tamanho, fases e limite de tribo;
+- foco em grupos fechados, comunidades e creators.
+
+20.3 Retencao
+
+- mural de legado;
+- medalhas permanentes;
+- alertas relevantes via PWA;
+- notificacoes somente para eventos importantes.
+
+
+==================================================
+21. PRINCIPIOS DE BALANCEAMENTO
+==================================================
+
+- Crescer deve ser poderoso, mas custoso.
+- Defesa deve ser viavel, nao passiva demais.
+- Tropa sem Suprimento e numero morto.
+- Influencia deve ser o gargalo nobre do jogo.
+- O fim do mundo deve punir excesso de ganancia.
+- Tribos fortes devem querer aliados menores vivos.
+- Informacao vale quase tanto quanto exercito.
+- O jogador precisa sentir que sempre ha um risco real.
+
+
+==================================================
+22. NORTH STAR DO PROJETO
+==================================================
+
+Se KingsWorld estiver funcionando direito, o jogador deve sentir:
+
+"Meu imperio e meu. Cada aldeia tem funcao. Cada atraso custa. Cada relatorio importa. Quando o mundo entra em colapso, sobreviver ja e uma conquista. Vencer, entao, vira lenda."
+
+==================================================
+23. COMO CRIAR ISSO DO ZERO
+==================================================
+
+Este documento nao parte de um app existente.
+Ele e a materia-prima para construir o projeto do zero, em etapas.
+
+Ordem recomendada de criacao:
+
+Etapa 1: Fundacao do produto
+
+- fechar a fantasia, proposta de valor e pilares;
+- fixar a terminologia oficial;
+- definir o que e regra obrigatoria e o que e expansao futura.
+
+Entregavel:
+
+- GDD base aprovado.
+
+Etapa 2: Regras do jogo
+
+- fechar economia;
+- fechar combate;
+- fechar vitoria, derrota e sucessao;
+- fechar aliancas, Cidadela e Fase 2.
+
+Entregavel:
+
+- documento de regras jogaveis sem contradicao.
+
+Etapa 3: Escopo de MVP
+
+- separar o que entra agora;
+- cortar o que e complexo demais para primeira versao;
+- definir o menor loop realmente divertido.
+
+Entregavel:
+
+- lista fechada de features do MVP.
+
+Etapa 4: Estrutura tecnica
+
+- modelar banco;
+- modelar ticks;
+- modelar movimentos;
+- modelar relatorios;
+- modelar seguranca server-side.
+
+Entregavel:
+
+- documento tecnico de backend e dados.
+
+Etapa 5: Estrutura de interface
+
+- mapear telas;
+- mapear navegacao;
+- mapear estados;
+- mapear componentes principais.
+
+Entregavel:
+
+- blueprint de UX e fluxos.
+
+Etapa 6: Backlog de producao
+
+- quebrar tudo em tarefas pequenas;
+- ordenar por dependencia;
+- separar fundacao, core loop e conteudo.
+
+Entregavel:
+
+- backlog pronto para execucao.
+
+Resumo pratico:
+
+Primeiro a gente fecha o jogo no papel.
+Depois fecha o MVP.
+Depois desenha dados, telas e backlog.
+So depois entra em implementacao.
+
+==================================================
+24. NOTA DE PRECEDENCIA DO ESCOPO
+==================================================
+
+A secao de MVP resumida dentro deste documento foi superada pelo arquivo:
+
+01_MVP_FECHADO.txt
+
+Regra de precedencia:
+
+- em caso de conflito sobre o que entra no MVP, vale o 01_MVP_FECHADO.txt;
+- o MVP oficial de KingsWorld inclui todos os sistemas centrais de gameplay;
+- ficam fora apenas camadas cosmeticas, comerciais e variantes nao essenciais de mundo.
+
+==================================================
+25. ATUALIZACAO OFICIAL V2 (MARCO 2026)
+==================================================
+
+Esta secao substitui as regras antigas de progressao de nivel para a temporada de 120 dias.
+Quando houver conflito, esta secao tem precedencia sobre secoes anteriores.
+
+25.1 Linha do tempo oficial
+
+Fase I - Consolidacao (Dia 1 ao 20)
+- Objetivo: consolidar a Capital e preparar expansao.
+- Meta de gestao: no Dia 20 o jogador precisa ter influencia para abrir a 2a aldeia.
+- Resultado esperado: niveis mistos entre edificios (alguns mais altos, outros em suporte).
+
+Fase II - Expansao (Dia 21 ao 60)
+- Objetivo: chegar em 6 a 7 aldeias com rotas de envio funcionando.
+- Meta de gestao: logistica real entre colonias, sem colapsar suprimentos e energia.
+
+Fase III - Fortificacao (Dia 61 ao 90)
+- Objetivo: fechar defesa, estabilizar economia e elevar teto militar.
+- Meta de gestao: entrar no Dia 91 com exercito operacional e influencia de reserva.
+
+Fase IV - Exodo (Dia 91 ao 120)
+- Objetivo: abandonar cidades quando necessario, marchar ao centro e disputar o portal.
+- Meta de gestao: sobreviver as hordas e converter preparo em entrada no Trono Central.
+
+25.2 Desenvolvimento e influencia (nova regra estrutural)
+
+- Cada aldeia usa 10 edificios no calculo de desenvolvimento.
+- Cada um desses 10 edificios tem nivel maximo 10.
+- Cap de Desenvolvimento por aldeia: 100 pontos.
+- O desenvolvimento define o cap politico (influencia maxima) da aldeia.
+
+Diretriz de sistema:
+- Influencia nao e apenas score.
+- Influencia e moeda estrategica para expansao, diplomacia, espionagem e entrada no portal.
+
+25.3 Vitoria da temporada
+
+- O jogo pode ter vencedores multiplos por sobrevivencia/entrada no portal.
+- A honraria maxima de Soberano vai para quem terminar com maior Score de Poder entre os que cumpriram o endgame.
+- O legado final combina: sobrevivencia, integridade militar no exodo e influencia convertida em objetivos reais.
+
+25.4 Estado atual de implementacao recomendado
+
+- Fonte unica de formula: core/GameBalance.ts.
+- Simulacao oficial de balanceamento: simulations/simulate-season-v2.mjs.
+- Saida oficial para leitura e ajuste: simulations/output/season_v2_120d_*.{json,csv,md}.
+
+==================================================
+26. REGRA DE PRECEDENCIA DE DOCUMENTOS
+==================================================
+
+Ordem oficial (do mais forte para o mais fraco):
+1. 01_MVP_FECHADO.txt
+2. Secao 25 deste KINGSWORLD.txt (Atualizacao Oficial V2)
+3. Demais secoes historicas deste KINGSWORLD.txt
+
+==================================================
+27. NOTA DE BALANCEAMENTO CONTINUO
+==================================================
+
+O balanceamento deve ser iterado com simulacao e nao por chute:
+- qualquer mudanca em custo, tempo, producao, upkeep ou combate passa pelo simulador;
+- o ajuste e aceito quando nao trava a Fase II e nao colapsa artificialmente a Fase IV;
+- o app e o documento devem compartilhar a mesma regra para evitar formulas paralelas.

@@ -1,0 +1,1465 @@
+﻿KINGSWORLD
+02. BANCO DE DADOS
+Espinha Dorsal do MVP
+
+==================================================
+1. FINALIDADE
+==================================================
+
+Este documento define a modelagem de dados do MVP real de KingsWorld.
+
+Objetivo:
+
+- sustentar uma temporada completa de 120 dias;
+- suportar todos os pilares centrais travados no 01_MVP_FECHADO.txt;
+- evitar remendo estrutural quando sucessao, Cidadela ou Fase 2 entrarem em jogo;
+- servir como base para migrations, services e backlog tecnico.
+
+Regra de precedencia:
+
+- este documento depende do 01_MVP_FECHADO.txt;
+- se houver conflito de gameplay, vale o 01_MVP_FECHADO.txt;
+- se houver conflito de persistencia, vale este documento.
+
+
+==================================================
+2. DECISOES TECNICAS BASE
+==================================================
+
+Banco recomendado:
+
+- PostgreSQL.
+
+Convencoes:
+
+- PKs em uuid;
+- timestamps em timestamptz sempre em UTC;
+- recursos, contagens e score em bigint;
+- campos de estado com texto controlado por check constraint ou enum;
+- jsonb apenas para payloads secundarios, relatorios e auditoria;
+- toda resolucao critica acontece no servidor dentro de transacao.
+
+Principios:
+
+- estado principal do jogo fica normalizado;
+- relatorio e auditoria podem usar jsonb;
+- score usa cache mais ledger append-only;
+- recursos usam reconciliacao por delta time;
+- movimentos usam tabelas filhas para tropas, oficiais, Coroa e carga.
+
+
+==================================================
+3. MAPA GERAL DO SCHEMA
+==================================================
+
+Camada 1. Conta global
+
+- users
+- user_medals
+- user_world_history
+
+Camada 2. Mundo e participantes
+
+- worlds
+- world_players
+- tribes
+- tribe_invites
+
+Camada 3. Mapa e alvos
+
+- map_tiles
+- map_sites
+- villages
+- tribe_citadels
+
+Camada 4. Economia e progresso
+
+- village_resource_states
+- village_buildings
+- building_jobs
+- world_player_research
+- research_jobs
+- protocol_activations
+
+Camada 5. Guerra e logistica
+
+- royal_units
+- officer_units
+- site_troop_stacks
+- movements
+- movement_troops
+- movement_officers
+- movement_royals
+- movement_resources
+
+Camada 6. Fase 2 e eventos globais
+
+- world_events
+- world_event_targets
+
+Camada 7. Inteligencia, score e legado
+
+- reports
+- report_recipients
+- score_entries
+- world_final_standings
+- audit_events
+
+Camada 8. Catalogos seedados
+
+- building_catalog
+- unit_catalog
+- research_catalog
+- protocol_catalog
+- medal_catalog
+- event_catalog
+
+
+==================================================
+4. MODELAGEM CONCEITUAL CENTRAL
+==================================================
+
+Relacoes principais:
+
+- 1 user participa de N worlds via world_players.
+- 1 world tem N world_players.
+- 1 world tem N tribes.
+- 1 world tem N map_tiles.
+- 1 map_tile pode ter 0 ou 1 map_site ocupando a coordenada.
+- 1 map_site pode ser subtipo village ou tribe_citadel.
+- 1 world_player pode controlar N villages.
+- 1 world_player tem exatamente 1 Rei ativo e 1 Principe ativo no mundo.
+- 1 tribe tem no maximo 1 Cidadela.
+- 1 movement pode carregar N tropas, N oficiais, 0 ou 1 Rei, 0 ou 1 Principe e recursos.
+- 1 report pode ser entregue a N destinatarios.
+- 1 world_event pode atingir N jogadores, N tribos ou N sites via world_event_targets.
+
+Decisao estrutural critica:
+
+O banco usa map_sites como entidade base de qualquer alvo relevante no tabuleiro.
+
+Isso resolve:
+
+- movimento para aldeia;
+- movimento para Cidadela;
+- relatorios com alvo uniforme;
+- visao de mapa sem gambiarra de polimorfismo solto.
+
+
+==================================================
+5. TABELAS GLOBAIS
+==================================================
+
+5.1 users
+
+Finalidade:
+
+Conta global do jogador.
+
+Campos principais:
+
+- id
+- username
+- email
+- password_hash
+- global_score_cached
+- created_at
+- updated_at
+- last_login_at
+- account_status
+
+Regras:
+
+- username unico case-insensitive;
+- email unico case-insensitive;
+- nada de regra de mundo aqui.
+
+5.2 user_medals
+
+Finalidade:
+
+Medalhas permanentes recebidas pelo jogador entre mundos.
+
+Campos principais:
+
+- id
+- user_id
+- world_id
+- medal_code
+- awarded_at
+- metadata_json
+
+Observacao:
+
+- medal_code referencia medal_catalog.
+
+5.3 user_world_history
+
+Finalidade:
+
+Historico consolidado do jogador em cada temporada finalizada.
+
+Campos principais:
+
+- id
+- user_id
+- world_id
+- final_rank_individual
+- final_rank_tribe
+- final_power_score
+- survived_to_end
+- legacy_summary_json
+- created_at
+
+
+==================================================
+6. TABELAS DE MUNDO E PARTICIPANTES
+==================================================
+
+6.1 worlds
+
+Finalidade:
+
+Representa um mundo sazonal jogavel.
+
+Campos principais:
+
+- id
+- slug
+- name
+- status
+- phase
+- day_number
+- registration_opens_at
+- starts_at
+- phase_2_starts_at
+- ends_at
+- finalized_at
+- player_cap
+- tribe_member_cap
+- map_width
+- map_height
+- created_at
+
+Estados recomendados:
+
+- status: open, running, finalized
+- phase: phase_1, phase_2, closed
+
+6.2 world_players
+
+Finalidade:
+
+Representa a participacao de um user em um world.
+
+Campos principais:
+
+- id
+- world_id
+- user_id
+- tribe_id nullable
+- status
+- joined_at
+- eliminated_at nullable
+- elimination_reason nullable
+- current_capital_site_id nullable
+- power_score_cached
+- is_alive_cached
+- tribute_debt_cached
+- last_score_recalc_at
+
+Estados recomendados:
+
+- status: alive, eliminated, resigned, archived
+
+Regras:
+
+- unique(world_id, user_id);
+- current_capital_site_id aponta para villages.site_id;
+- um jogador pode sobreviver temporariamente sem Capital se estiver em sucessao pendente.
+
+6.3 tribes
+
+Finalidade:
+
+Agrupamento politico e militar do mundo.
+
+Campos principais:
+
+- id
+- world_id
+- name
+- tag
+- leader_world_player_id
+- status
+- total_score_cached
+- collapse_started_at nullable
+- collapse_ends_at nullable
+- created_at
+- updated_at
+
+Estados recomendados:
+
+- status: active, collapsed, dissolved
+
+Regras:
+
+- unique(world_id, name);
+- unique(world_id, tag);
+- limite de membros = 6 precisa ser travado por service + lock transacional.
+
+6.4 tribe_invites
+
+Finalidade:
+
+Convites pendentes de Tribo.
+
+Campos principais:
+
+- id
+- tribe_id
+- invited_world_player_id
+- invited_by_world_player_id
+- status
+- created_at
+- expires_at
+- responded_at nullable
+
+Estados recomendados:
+
+- status: pending, accepted, declined, expired, cancelled
+
+
+==================================================
+7. MAPA, SITES E TERRITORIO
+==================================================
+
+7.1 map_tiles
+
+Finalidade:
+
+Grid persistente do mundo.
+
+Campos principais:
+
+- id
+- world_id
+- x
+- y
+- biome_type
+- terrain_type
+- site_id nullable
+- created_at
+
+Regras:
+
+- unique(world_id, x, y);
+- site_id nullable porque pode haver tile vazio.
+
+7.2 map_sites
+
+Finalidade:
+
+Entidade base de qualquer ponto atacavel, ocupavel ou relevante do mapa.
+
+Campos principais:
+
+- id
+- world_id
+- tile_id
+- site_type
+- status
+- created_at
+- updated_at
+
+Tipos recomendados:
+
+- village
+- citadel
+- ruin
+
+Estados recomendados:
+
+- active
+- ruined
+- destroyed
+- hidden
+
+Regras:
+
+- unique(tile_id);
+- movimentos sempre apontam para map_sites.id.
+
+7.3 villages
+
+Finalidade:
+
+Subtipo de map_site para aldeias de jogador.
+
+Campos principais:
+
+- site_id
+- world_id
+- owner_world_player_id nullable
+- founder_world_player_id nullable
+- name
+- village_type
+- political_state
+- capital_eligibility_status
+- is_original_capital
+- founded_at
+- conquered_at nullable
+- destroyed_at nullable
+- last_political_change_at
+
+Tipos recomendados:
+
+- village_type: capital, colony
+
+Estados recomendados:
+
+- political_state: stable, succession_pending, fallen, ruined
+- capital_eligibility_status: eligible, ineligible, pending_review
+
+Regras:
+
+- uma aldeia do tipo capital nao pode ser anexada por Diplomata;
+- no maximo uma capital ativa por world_player;
+- sucessao depende do capital_eligibility_status e do estado do Principe.
+
+Observacao:
+
+- is_original_capital serve para legado e analise historica;
+- owner_world_player_id nullable permite ruina ou sitio neutro apos devastacao.
+
+7.4 tribe_citadels
+
+Finalidade:
+
+Subtipo de map_site para a Cidadela unica da Tribo.
+
+Campos principais:
+
+- site_id
+- world_id
+- tribe_id
+- status
+- construction_progress
+- level
+- destroyed_at nullable
+- collapse_triggered_at nullable
+- bonus_profile_code
+- created_at
+
+Estados recomendados:
+
+- planned
+- building
+- active
+- destroyed
+
+Regras:
+
+- unique(tribe_id);
+- a Cidadela existe no mapa e pode ser alvo direto de movimento;
+- destruicao da Cidadela dispara Colapso de Tribo.
+
+
+==================================================
+8. ECONOMIA, EDIFICIOS E PROGRESSAO
+==================================================
+
+8.1 village_resource_states
+
+Finalidade:
+
+Estado reconciliavel dos 4 recursos por aldeia.
+
+Campos principais:
+
+- village_site_id
+- materials_stock
+- supplies_stock
+- energy_stock
+- influence_stock
+- materials_capacity
+- supplies_capacity
+- energy_capacity
+- influence_capacity
+- materials_rate_per_minute
+- supplies_rate_per_minute
+- energy_rate_per_minute
+- influence_rate_per_minute
+- supplies_upkeep_per_minute
+- energy_upkeep_per_minute
+- last_reconciled_at
+- updated_at
+
+Regra central:
+
+O valor atual nunca depende de cron a cada segundo.
+Ele depende de reconciliacao por delta time.
+
+Formula base:
+
+- stock_atual = stock_salvo + ((producao - consumo) * minutos_passados)
+
+Observacao:
+
+- capacities ficam cacheadas para leitura rapida do header;
+- rates tambem ficam cacheadas para reduzir recalculo em toda request.
+
+8.2 village_buildings
+
+Finalidade:
+
+Estado atual de cada edificio em cada aldeia.
+
+Campos principais:
+
+- id
+- village_site_id
+- building_code
+- level
+- operational_state
+- updated_at
+
+Estados recomendados:
+
+- operational
+- paused
+- damaged
+- destroyed
+
+Regras:
+
+- unique(village_site_id, building_code);
+- edificio zero pode simplesmente nao ter linha;
+- downgrade por Protocolo ou Engenheiro altera level e pode mudar operational_state.
+
+8.3 building_jobs
+
+Finalidade:
+
+Fila de construcao, upgrade, repair e downgrade.
+
+Campos principais:
+
+- id
+- village_site_id
+- building_code
+- job_type
+- from_level
+- to_level
+- status
+- cost_materials
+- cost_supplies
+- cost_energy
+- cost_influence
+- refund_materials
+- refund_supplies
+- refund_energy
+- refund_influence
+- queued_at
+- starts_at
+- completes_at
+- completed_at nullable
+- cancelled_at nullable
+- source_reason
+
+Tipos recomendados:
+
+- job_type: upgrade, downgrade, repair
+
+Estados recomendados:
+
+- queued
+- running
+- completed
+- cancelled
+- failed
+
+Observacao:
+
+- downgrade atende Sacrificio / Desconstrucao sem precisar de tabela paralela.
+
+8.4 world_player_research
+
+Finalidade:
+
+Estado da arvore de ciencia global do jogador naquele mundo.
+
+Campos principais:
+
+- id
+- world_player_id
+- research_code
+- current_level
+- unlocked_at
+- updated_at
+
+Regras:
+
+- unique(world_player_id, research_code);
+- efeito sempre global para o world_player.
+
+8.5 research_jobs
+
+Finalidade:
+
+Fila de pesquisa por tempo.
+
+Campos principais:
+
+- id
+- world_player_id
+- research_code
+- from_level
+- to_level
+- status
+- started_at
+- completes_at
+- completed_at nullable
+- cancelled_at nullable
+
+Estados recomendados:
+
+- queued
+- running
+- completed
+- cancelled
+- failed
+
+8.6 protocol_activations
+
+Finalidade:
+
+Protocolos ativos ou resolvidos da Fase 2.
+
+Campos principais:
+
+- id
+- world_id
+- owner_world_player_id
+- target_scope_type
+- target_site_id nullable
+- protocol_code
+- status
+- started_at
+- ends_at nullable
+- resolved_at nullable
+- payload_json
+
+Tipos recomendados:
+
+- target_scope_type: world_player, village
+
+Protocolos minimos:
+
+- sacrifice_downgrade
+- focus_defense
+- focus_supply
+- focus_energy
+- focus_influence
+
+Estados recomendados:
+
+- active
+- resolved
+- expired
+- cancelled
+
+Observacao:
+
+- Protocolo de Sacrificio tambem gera building_jobs de downgrade;
+- o protocolo registra a intencao e os modificadores ativos.
+
+
+==================================================
+9. UNIDADES, TROPAS E COROA
+==================================================
+
+9.1 royal_units
+
+Finalidade:
+
+Persistir Rei e Principe como entidades unicas e auditaveis.
+
+Campos principais:
+
+- id
+- world_player_id
+- royal_type
+- status
+- current_site_id nullable
+- current_movement_id nullable
+- last_known_to_owner_at
+- died_at nullable
+- death_report_id nullable
+
+Tipos recomendados:
+
+- royal_type: king, prince
+
+Estados recomendados:
+
+- stationed
+- moving
+- dead
+
+Regras:
+
+- unique(world_player_id, royal_type);
+- se status = stationed, current_site_id e obrigatorio;
+- se status = moving, current_movement_id e obrigatorio;
+- localizacao do Rei nao deve ser exposta sem regra de visibilidade.
+
+9.2 officer_units
+
+Finalidade:
+
+Persistir oficiais Tier 2 como unidades unicas do jogador.
+
+Campos principais:
+
+- id
+- world_player_id
+- officer_type
+- status
+- current_site_id nullable
+- current_movement_id nullable
+- created_at
+- retired_at nullable
+- metadata_json
+
+Tipos obrigatorios:
+
+- war_leader
+- hero
+- general
+- diplomat
+- spy
+- engineer
+- agriculturist
+
+Estados recomendados:
+
+- stationed
+- moving
+- dead
+- unavailable
+
+9.3 site_troop_stacks
+
+Finalidade:
+
+Guarnicao agregada por site, dono da tropa, tipo e grau.
+
+Campos principais:
+
+- id
+- site_id
+- owner_world_player_id
+- unit_code
+- unit_grade
+- stationing_type
+- quantity
+- updated_at
+
+Tipos recomendados:
+
+- unit_code: militia, shooters, scouts, machinery
+- unit_grade: bronze, silver, gold
+- stationing_type: home, support, citadel_guard
+
+Regras:
+
+- unique(site_id, owner_world_player_id, unit_code, unit_grade, stationing_type);
+- esta tabela permite tropas aliadas defendendo aldeias e Cidadelas.
+
+
+==================================================
+10. MOVIMENTOS E CARGA
+==================================================
+
+10.1 movements
+
+Finalidade:
+
+Envelope principal de qualquer deslocamento temporizado.
+
+Campos principais:
+
+- id
+- world_id
+- actor_type
+- actor_world_player_id nullable
+- source_event_id nullable
+- origin_site_id nullable
+- target_site_id
+- movement_type
+- status
+- launched_at
+- arrival_at
+- resolved_at nullable
+- return_arrival_at nullable
+- completed_at nullable
+- result_code nullable
+- created_at
+
+Tipos recomendados:
+
+- actor_type: player, npc
+- movement_type: attack, support, spy, transport, supply, return, horde
+
+Estados recomendados:
+
+- traveling
+- resolving
+- returning
+- completed
+- cancelled
+- failed
+
+Regras:
+
+- movement resolve uma vez so;
+- origin_site_id pode ser nullable em hordas NPC;
+- target_site_id sempre aponta para map_sites.
+
+10.2 movement_troops
+
+Finalidade:
+
+Composicao de tropas Tier 3 da marcha.
+
+Campos principais:
+
+- id
+- movement_id
+- owner_world_player_id
+- unit_code
+- unit_grade
+- quantity_sent
+- quantity_survived nullable
+
+10.3 movement_officers
+
+Finalidade:
+
+Oficiais Tier 2 presentes na marcha.
+
+Campos principais:
+
+- id
+- movement_id
+- officer_unit_id
+- role_code
+- survived nullable
+
+10.4 movement_royals
+
+Finalidade:
+
+Rei ou Principe deslocando entre sites.
+
+Campos principais:
+
+- id
+- movement_id
+- royal_unit_id
+- survived nullable
+
+Regra:
+
+- apenas movimentos civis ou militares explicitamente autorizados podem transportar Coroa.
+
+10.5 movement_resources
+
+Finalidade:
+
+Carga civil ou loot transportado pela marcha.
+
+Campos principais:
+
+- id
+- movement_id
+- materials_amount
+- supplies_amount
+- energy_amount
+- influence_amount
+
+Regra:
+
+- no MVP, loot normal usa Materiais e Suprimentos;
+- Energy e Influence podem existir aqui para transporte interno ou casos sistemicos, nao para saque padrao.
+
+
+==================================================
+11. TRIBOS, CIDADELA E COLAPSO
+==================================================
+
+11.1 tribe_citadels
+
+Ja definida como subtipo de site.
+O banco ainda precisa de tabelas de apoio.
+
+11.2 citadel_donations
+
+Finalidade:
+
+Rastrear contribuicoes para construir ou manter a Cidadela.
+
+Campos principais:
+
+- id
+- citadel_site_id
+- donor_world_player_id
+- materials_amount
+- supplies_amount
+- energy_amount
+- influence_amount
+- donated_at
+
+Uso:
+
+- progresso de construcao;
+- score de contribuicao;
+- relatorio de Tribo;
+- auditoria de obra coletiva.
+
+11.3 tribe_effects
+
+Finalidade:
+
+Bonus e debuffs ativos da Tribo.
+
+Campos principais:
+
+- id
+- tribe_id
+- effect_type
+- status
+- starts_at
+- ends_at nullable
+- source_site_id nullable
+- payload_json
+
+Tipos recomendados:
+
+- citadel_bonus
+- collapse_debuff
+
+Estados recomendados:
+
+- active
+- expired
+- cancelled
+
+Regras:
+
+- destruicao da Cidadela gera collapse_debuff;
+- efeitos ativos impactam defesa, logistica ou outros multiplicadores conforme regras seedadas.
+
+
+==================================================
+12. FASE 2, CATASTROFES E HORDAS
+==================================================
+
+12.1 world_events
+
+Finalidade:
+
+Calendario global e historico de eventos do servidor.
+
+Campos principais:
+
+- id
+- world_id
+- event_code
+- event_type
+- phase_scope
+- status
+- starts_at
+- ends_at nullable
+- payload_json
+- created_at
+
+Tipos recomendados:
+
+- phase_transition
+- catastrophe
+- tribute
+- horde_wave
+- system_notice
+
+Estados recomendados:
+
+- scheduled
+- active
+- resolved
+- failed
+- expired
+
+12.2 world_event_targets
+
+Finalidade:
+
+Aplicar o evento a jogadores, Tribos ou sites especificos.
+
+Campos principais:
+
+- id
+- world_event_id
+- target_type
+- target_world_player_id nullable
+- target_tribe_id nullable
+- target_site_id nullable
+- requirement_materials
+- requirement_supplies
+- requirement_energy
+- requirement_influence
+- paid_materials
+- paid_supplies
+- paid_energy
+- paid_influence
+- status
+- resolved_at nullable
+- outcome_json
+
+Tipos recomendados:
+
+- target_type: world_player, tribe, site
+
+Estados recomendados:
+
+- pending
+- paid
+- failed
+- resolved
+
+Uso:
+
+- tributos individuais;
+- tributos coletivos;
+- alvo de Horda;
+- consequencias por falha;
+- escalonamento por score.
+
+Observacao:
+
+- Hordas podem gerar movement rows do tipo horde com source_event_id apontando para world_events.id.
+
+
+==================================================
+13. RELATORIOS, SCORE E AUDITORIA
+==================================================
+
+13.1 reports
+
+Finalidade:
+
+Documento base de inteligencia do jogo.
+
+Campos principais:
+
+- id
+- world_id
+- report_type
+- source_type
+- source_id nullable
+- title
+- body_json
+- created_at
+
+Tipos recomendados:
+
+- battle
+- spy
+- loot
+- support
+- horde
+- tribute
+- system
+
+13.2 report_recipients
+
+Finalidade:
+
+Entrega do report para um ou mais jogadores.
+
+Campos principais:
+
+- id
+- report_id
+- world_player_id
+- visibility_reason
+- is_read
+- delivered_at
+- read_at nullable
+
+Tipos recomendados:
+
+- personal
+- tribe_shared
+- system_forced
+
+13.3 score_entries
+
+Finalidade:
+
+Ledger append-only de score individual ou coletivo.
+
+Campos principais:
+
+- id
+- world_id
+- subject_type
+- subject_world_player_id nullable
+- subject_tribe_id nullable
+- reason_code
+- delta_score
+- reference_type nullable
+- reference_id nullable
+- created_at
+- metadata_json
+
+Tipos recomendados:
+
+- subject_type: world_player, tribe
+
+Regra:
+
+- world_players.power_score_cached e tribes.total_score_cached sao cache;
+- score_entries e a trilha auditavel de verdade.
+
+13.4 world_final_standings
+
+Finalidade:
+
+Snapshot final do encerramento do mundo.
+
+Campos principais:
+
+- id
+- world_id
+- standing_type
+- subject_world_player_id nullable
+- subject_tribe_id nullable
+- final_rank
+- final_score
+- snapshot_at
+
+Tipos recomendados:
+
+- standing_type: individual, tribe
+
+13.5 audit_events
+
+Finalidade:
+
+Trilha de auditoria de mudancas criticas.
+
+Campos principais:
+
+- id
+- world_id nullable
+- actor_type
+- actor_id nullable
+- entity_type
+- entity_id nullable
+- action_code
+- payload_json
+- created_at
+
+Uso minimo:
+
+- eliminacao de jogador;
+- morte do Rei;
+- sucessao de Capital;
+- destruicao de Cidadela;
+- aplicacao de tributo;
+- falha de Horda;
+- recalculo manual de score.
+
+
+==================================================
+14. CATALOGOS SEEDEDOS
+==================================================
+
+Estes catalogos entram como dados seedados e nao como regra hardcoded no frontend:
+
+14.1 building_catalog
+
+Campos:
+
+- building_code
+- name
+- category
+- max_level
+- base_cost_json
+- base_time_seconds
+- unlock_rules_json
+- effect_rules_json
+
+14.2 unit_catalog
+
+Campos:
+
+- unit_code
+- unit_tier
+- unit_grade nullable
+- attack_value
+- defense_value
+- speed_value
+- carry_capacity
+- upkeep_supplies_per_minute
+- upkeep_energy_per_minute
+- train_cost_json
+- train_time_seconds
+- special_rules_json
+
+14.3 research_catalog
+
+Campos:
+
+- research_code
+- branch_code
+- max_level
+- base_cost_json
+- base_time_seconds
+- prerequisite_rules_json
+- effect_rules_json
+
+14.4 protocol_catalog
+
+Campos:
+
+- protocol_code
+- target_scope_type
+- cost_rules_json
+- effect_rules_json
+- duration_seconds nullable
+
+14.5 medal_catalog
+
+Campos:
+
+- medal_code
+- name
+- description
+- permanent_flag
+
+14.6 event_catalog
+
+Campos:
+
+- event_code
+- event_type
+- payload_template_json
+- scaling_rules_json
+
+
+==================================================
+15. CONSTRAINTS CRITICAS
+==================================================
+
+Estas regras precisam existir no banco, por constraint, unique index, trigger ou transacao bloqueada:
+
+- unique(world_id, user_id) em world_players;
+- unique(world_id, x, y) em map_tiles;
+- unique(tile_id) em map_sites;
+- unique(tribe_id) em tribe_citadels;
+- unique(world_player_id, royal_type) em royal_units;
+- no maximo 1 capital ativa por world_player;
+- no maximo 6 membros vivos por Tribo;
+- movement nao pode ser resolvido duas vezes;
+- Capital nao pode ser convertida por Diplomata;
+- Rei morto sem sucessao valida elimina o world_player;
+- destruicao de Cidadela cria efeito de Colapso no mesmo commit logico.
+
+Regras que pedem transacao forte:
+
+- fundacao de nova Colonia;
+- conquista por Diplomata;
+- morte do Rei;
+- sucessao de Capital;
+- destruicao de Cidadela;
+- pagamento de tributo no limite do prazo;
+- encerramento do mundo.
+
+
+==================================================
+16. INDICES CRITICOS
+==================================================
+
+Indices mais importantes para performance:
+
+- movements(status, arrival_at);
+- movements(world_id, status, arrival_at);
+- world_events(world_id, status, starts_at);
+- world_event_targets(world_event_id, status);
+- map_tiles(world_id, x, y);
+- villages(owner_world_player_id, village_type, political_state);
+- village_resource_states(village_site_id);
+- village_buildings(village_site_id, building_code);
+- site_troop_stacks(site_id, owner_world_player_id);
+- royal_units(world_player_id, status);
+- officer_units(world_player_id, status);
+- reports(world_id, created_at desc);
+- report_recipients(world_player_id, is_read);
+- score_entries(world_id, created_at desc);
+- tribes(world_id, total_score_cached desc);
+- world_players(world_id, power_score_cached desc).
+
+
+==================================================
+17. FLUXOS QUE O BANCO PRECISA SUPORTAR
+==================================================
+
+17.1 Reconciliacao de recursos
+
+Entradas:
+
+- village_resource_states;
+- village_buildings;
+- site_troop_stacks;
+- protocol_activations;
+- world_player_research;
+- tribe_effects.
+
+Saida:
+
+- stocks e rates atualizados;
+- last_reconciled_at novo.
+
+17.2 Resolucao de movimento
+
+Entradas:
+
+- movements;
+- movement_troops;
+- movement_officers;
+- movement_royals;
+- movement_resources;
+- target site.
+
+Saida:
+
+- combate ou apoio resolvido;
+- stacks atualizadas;
+- relatorios gerados;
+- score_entries escritos;
+- audit_events escritos.
+
+17.3 Morte do Rei e sucessao
+
+Entradas:
+
+- royal_units;
+- villages;
+- world_players;
+- building state da Colonia do Principe.
+
+Saida:
+
+- world_player eliminado ou sobrevivente;
+- current_capital_site_id atualizado quando aplicavel;
+- relatorio de morte ou sucessao;
+- audit trail.
+
+17.4 Destruicao de Cidadela
+
+Entradas:
+
+- tribe_citadels;
+- tribes;
+- tribe_effects.
+
+Saida:
+
+- Cidadela destruida;
+- Colapso ativo;
+- score e relatorios atualizados.
+
+17.5 Fase 2
+
+Entradas:
+
+- world_events;
+- world_event_targets;
+- world_players;
+- tribes;
+- scores.
+
+Saida:
+
+- tributos cobrados;
+- Hordas geradas;
+- penalidades aplicadas;
+- logs e reports emitidos.
+
+17.6 Encerramento de mundo
+
+Entradas:
+
+- power_score_cached;
+- total_score_cached;
+- status de sobrevivencia.
+
+Saida:
+
+- world_final_standings;
+- user_medals;
+- user_world_history;
+- worlds.finalized_at.
+
+
+==================================================
+18. O QUE NAO DEVE FICAR SOLTO NO FRONTEND
+==================================================
+
+Nunca depender do cliente para definir:
+
+- tempo final de construcao;
+- tempo final de pesquisa;
+- chegada de movimento;
+- morte do Rei;
+- sucesso de sucessao;
+- conquista por Diplomata;
+- destruicao de Cidadela;
+- valor final de saque;
+- falha ou sucesso em tributo;
+- resultado final de Horda;
+- score final.
+
+O cliente so renderiza.
+O servidor decide.
+O banco persiste.
+
+
+==================================================
+19. ORDEM RECOMENDADA DE MIGRATIONS
+==================================================
+
+1. Catalogos base.
+2. users, user_medals, user_world_history.
+3. worlds, world_players, tribes, tribe_invites.
+4. map_tiles, map_sites, villages, tribe_citadels.
+5. village_resource_states, village_buildings, building_jobs.
+6. world_player_research, research_jobs, protocol_activations.
+7. royal_units, officer_units, site_troop_stacks.
+8. movements e tabelas filhas.
+9. world_events, world_event_targets, tribe_effects, citadel_donations.
+10. reports, report_recipients, score_entries, world_final_standings, audit_events.
+
+
+==================================================
+20. STATUS
+==================================================
+
+Status deste documento: PRONTO PARA VIRAR SCHEMA TECNICO.
+
+Proximo artefato recomendado:
+
+03. BACKLOG DE EXECUCAO

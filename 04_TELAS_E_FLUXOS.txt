@@ -1,0 +1,728 @@
+﻿KINGSWORLD
+04. TELAS E FLUXOS
+Blueprint de Interface e Navegacao
+
+==================================================
+1. FINALIDADE
+==================================================
+
+Este documento define como o jogador enxerga e opera KingsWorld.
+
+Objetivo:
+
+- transformar sistemas em experiencia jogavel;
+- garantir que a interface respeite o backlog e o backend;
+- definir telas, estados, fluxos e componentes obrigatorios;
+- evitar UI bonita sem funcao real.
+
+Regra de precedencia:
+
+- gameplay continua vindo de 01_MVP_FECHADO.txt;
+- dados e estados continuam vindo de 02_BANCO_DE_DADOS.txt;
+- ordem de implementacao continua vindo de 03_BACKLOG_DE_EXECUCAO.txt;
+- este documento define a camada de interacao do jogador com tudo isso.
+
+
+==================================================
+2. TESE DE UX DE KINGSWORLD
+==================================================
+
+KingsWorld nao e um app de paginas soltas.
+Ele precisa parecer um centro de comando vivo.
+
+Principios:
+
+- o jogador nunca perde o contexto do mundo;
+- a aldeia ativa precisa estar sempre visivel como referencia;
+- acoes rapidas devem acontecer em modais ou paines, nao em paginas mortas;
+- relatorio e tao importante quanto o botao de acao;
+- a interface precisa caber no celular sem virar um inferno de scroll;
+- desktop ganha espaco extra, mas nao muda a logica do produto.
+
+Direcao visual:
+
+- base clara e sofisticada;
+- contraste alto para texto e numeros;
+- vidro fosco so em header, bottom nav e modais grandes;
+- cards comuns sem blur pesado;
+- sem poluicao medieval generica;
+- clima de soberania, estrategia e painel de guerra.
+
+
+==================================================
+3. ARQUITETURA DE NAVEGACAO
+==================================================
+
+A navegacao tem 2 camadas.
+
+Camada 1. Fora do mundo
+
+- Login / Cadastro
+- Recuperacao de senha
+- Lobby de mundos
+- Perfil global / legado
+
+Camada 2. Dentro do mundo
+
+- Shell persistente do mundo
+- Header fixo
+- Bottom navigation com 5 pilares
+- Modais e drawers para acoes taticas
+
+Rotas sugeridas:
+
+- /login
+- /register
+- /forgot-password
+- /lobby
+- /profile
+- /world/:worldId/empire
+- /world/:worldId/operations
+- /world/:worldId/base
+- /world/:worldId/board
+- /world/:worldId/intelligence
+
+Regra de fluxo:
+
+Uma vez dentro do mundo, o jogador nao deve sentir que saiu dele ao trocar de aba.
+Tudo precisa parecer parte do mesmo painel persistente.
+
+
+==================================================
+4. SHELL GLOBAL DO MUNDO
+==================================================
+
+4.1 Header fixo
+
+O header existe em todas as telas dentro do mundo.
+
+Ele precisa mostrar:
+
+- nome do mundo;
+- dia atual e fase atual;
+- aldeia ativa;
+- 4 recursos da aldeia ativa;
+- alertas criticos;
+- acesso rapido ao perfil / configuracoes;
+- indicador de status da Coroa.
+
+Componentes do header:
+
+- seletor de aldeia;
+- chips de Materiais, Suprimentos, Energia e Influencia;
+- badge de tributo pendente;
+- badge de horda chegando;
+- badge de rei em risco;
+- badge de Cidadela sob ataque;
+- atalho de unread reports.
+
+4.2 Bottom navigation
+
+As 5 abas centrais do jogo sao:
+
+1. Imperio
+2. Operacoes
+3. Base
+4. Tabuleiro
+5. Inteligencia
+
+Regras da bottom nav:
+
+- fica sempre visivel no mobile;
+- a aba Base e a acao central e visualmente dominante;
+- badges vermelhos ou dourados so em eventos importantes;
+- a troca de aba nunca perde a aldeia ativa.
+
+4.3 Overlays universais
+
+Overlays obrigatorios no produto:
+
+- seletor de aldeia;
+- modal de edificio;
+- modal de recrutamento;
+- modal de envio de movimento;
+- modal de tributo;
+- modal de protocolo;
+- drawer de relatorio;
+- confirm dialog de acao critica;
+- toast de resultado rapido.
+
+
+==================================================
+5. ESTADOS GLOBAIS DA INTERFACE
+==================================================
+
+Estados que podem aparecer em qualquer aba:
+
+- normal_operation
+- village_under_attack
+- king_in_danger
+- succession_pending
+- phase_2_active
+- tribute_due
+- horde_incoming
+- citadel_under_attack
+- tribe_collapsed
+- world_finalizing
+
+Cada estado global altera:
+
+- badges do header;
+- prioridade de cards e listas;
+- cor dos alertas;
+- ordem dos blocos na home da aba;
+- mensagens de risco e CTA principal.
+
+Exemplo de prioridade:
+
+- se king_in_danger = true, o CTA principal do app vira defesa, deslocamento da Coroa ou leitura do relatorio.
+- se tribute_due = true, o CTA principal da aba Operacoes vira pagar tributo ou pedir ajuda.
+- se citadel_under_attack = true, Tabuleiro e Inteligencia precisam gritar isso imediatamente.
+
+
+==================================================
+6. TELA 1 - LOGIN E CADASTRO
+==================================================
+
+Objetivo:
+
+Permitir que o jogador entre rapido no ecossistema sem friccao.
+
+Blocos obrigatorios:
+
+- formulario de login;
+- formulario de cadastro;
+- link de recuperacao de senha;
+- texto curto de pitch do jogo;
+- chamada visual para legado e temporadas.
+
+Acoes principais:
+
+- entrar;
+- criar conta;
+- recuperar senha.
+
+Estados obrigatorios:
+
+- loading;
+- credencial invalida;
+- conta criada com sucesso;
+- email ja em uso;
+- falha tecnica.
+
+Pronto quando:
+
+- o fluxo inteiro de autenticacao existe sem depender do lobby manualmente.
+
+
+==================================================
+7. TELA 2 - LOBBY DE MUNDOS
+==================================================
+
+Objetivo:
+
+Ser a porta de entrada das temporadas.
+
+Blocos obrigatorios:
+
+- lista de mundos por status;
+- card por mundo;
+- CTA de entrar ou registrar;
+- resumo de vencedores em mundos finalizados;
+- destaque do dia e fase em mundos ativos.
+
+Cada card de mundo deve mostrar:
+
+- nome;
+- status;
+- dia atual;
+- fase;
+- jogadores ativos;
+- acao disponivel.
+
+Acoes principais:
+
+- registrar no mundo;
+- entrar no mundo;
+- ver ranking final;
+- abrir perfil global.
+
+Estados obrigatorios:
+
+- sem mundo disponivel;
+- mundo lotado;
+- inscricao fechada;
+- mundo finalizado;
+- usuario ja registrado.
+
+
+==================================================
+8. TELA 3 - PERFIL GLOBAL / LEGADO
+==================================================
+
+Objetivo:
+
+Dar peso ao historico do jogador entre temporadas.
+
+Blocos obrigatorios:
+
+- username e banner basico;
+- medalhas conquistadas;
+- historico de mundos;
+- melhores colocacoes;
+- titulos de legado.
+
+Acoes principais:
+
+- voltar ao lobby;
+- abrir historico de mundo finalizado.
+
+Regra de UX:
+
+Esta tela e curta, prestigiosa e limpa. Ela nao compete com o mundo ativo.
+
+
+==================================================
+9. TELA 4 - IMPERIO
+==================================================
+
+Objetivo:
+
+Dar controle macro sobre todas as aldeias do jogador.
+
+Layout:
+
+- lista vertical de cards no mobile;
+- lista + painel lateral opcional no desktop.
+
+Cada card de aldeia deve mostrar:
+
+- nome;
+- tipo: Capital ou Colonia;
+- estado politico;
+- status de recursos;
+- nivel politico principal;
+- se o Rei esta ali;
+- se o Principe esta ali;
+- se esta sob ataque;
+- se esta em fome ou deficit de energia.
+
+Acoes principais:
+
+- trocar aldeia ativa;
+- renomear aldeia;
+- abrir Base;
+- abrir Operacoes filtradas naquela aldeia;
+- priorizar defesa ou suporte.
+
+Estados especiais:
+
+- aldeia com Rei;
+- aldeia com Principe;
+- sucessao pendente;
+- aldeia em colapso economico;
+- aldeia atacada.
+
+Regra de UX:
+
+Essa tela precisa permitir administrar 10, 20 ou mais aldeias sem abrir uma por uma.
+
+
+==================================================
+10. TELA 5 - OPERACOES
+==================================================
+
+Objetivo:
+
+Ser o centro logistico do jogo.
+
+Estrutura obrigatoria:
+
+- bloco de Ciencia;
+- bloco de Cronograma;
+- bloco de alertas estrategicos.
+
+Bloco Ciencia deve mostrar:
+
+- ramos de pesquisa;
+- progresso atual;
+- proxima fila;
+- prerequisitos travados;
+- impacto esperado da pesquisa.
+
+Bloco Cronograma deve mostrar:
+
+- construcoes em andamento;
+- pesquisas em andamento;
+- movimentos ativos;
+- retorno de tropas;
+- hordas chegando;
+- tributos com prazo;
+- timers da Fase 2.
+
+Acoes principais:
+
+- iniciar pesquisa;
+- cancelar acao se a regra permitir;
+- abrir detalhe de movimento;
+- abrir relatorio vinculado;
+- pagar tributo;
+- ativar protocolo.
+
+Estados especiais:
+
+- sem acao em fila;
+- cronograma limpo;
+- tributo vencendo;
+- horda em contagem regressiva;
+- protocolo ativo.
+
+Regra de UX:
+
+Operacoes nao e um deposito de timers. Ela e uma sala de guerra com agenda.
+
+
+==================================================
+11. TELA 6 - BASE
+==================================================
+
+Objetivo:
+
+Ser a visao mais concreta da aldeia ativa.
+
+Estrutura obrigatoria:
+
+- cena principal da aldeia;
+- edificios clicaveis;
+- painel inferior ou lateral de acao rapida;
+- contexto da Coroa e guarnicao.
+
+Edificios clicaveis obrigatorios:
+
+- Palacio;
+- Senado;
+- Minas / Extratores;
+- Complexo Industrial;
+- Fazendas / Campos;
+- Fazenda Matriz;
+- Habitacoes;
+- Distrito Metropolitano;
+- Centro de Pesquisa;
+- Malha Viaria Imperial;
+- Quartel;
+- Arsenal;
+- Muralha;
+- Bastiao;
+- Maravilha.
+
+Ao clicar num edificio, o modal precisa mostrar:
+
+- nivel atual;
+- proximo nivel;
+- custo;
+- tempo;
+- efeito;
+- prerequisito;
+- CTA principal.
+
+Acoes principais:
+
+- upgrade;
+- repair;
+- downgrade em caso de protocolo;
+- recrutar tropas;
+- recrutar oficiais;
+- abrir detalhes da aldeia.
+
+Estados especiais:
+
+- aldeia sob ataque;
+- Rei presente;
+- Principe presente;
+- protocolo ativo;
+- Fase 2 pressionando a aldeia.
+
+Regra de UX:
+
+O jogador deve continuar vendo a aldeia ao fundo enquanto toma decisoes. Nao pode parecer troca brusca de pagina.
+
+
+==================================================
+12. TELA 7 - TABULEIRO
+==================================================
+
+Objetivo:
+
+Ser o centro de diplomacia, guerra e projecao territorial.
+
+Estrutura obrigatoria:
+
+- mapa em grid navegavel;
+- aldeias e Cidadelas identificadas;
+- painel de detalhes do alvo selecionado;
+- filtros de visao;
+- atalhos de acao militar e civil.
+
+Cada site selecionado precisa revelar:
+
+- nome e coordenada;
+- dono atual;
+- tipo de site;
+- estado atual;
+- relacao com o jogador;
+- opcoes disponiveis.
+
+Acoes principais em alvo inimigo:
+
+- atacar;
+- espionar;
+- marcar alvo.
+
+Acoes principais em aliado:
+
+- apoiar;
+- enviar recursos;
+- defender Cidadela;
+- abrir relatorios compartilhados.
+
+Acoes principais em site proprio:
+
+- mover Rei;
+- mover Principe;
+- abrir Base;
+- enviar tropas.
+
+Estados especiais:
+
+- Cidadela em construcao;
+- Cidadela ativa;
+- Cidadela sob ataque;
+- alvo em Fase 2 sob horda;
+- sitio arruinado.
+
+Regra de UX:
+
+Tabuleiro precisa ser rapido para emitir ordens. Clique, le contexto, age. Sem passos burocraticos demais.
+
+
+==================================================
+13. TELA 8 - INTELIGENCIA
+==================================================
+
+Objetivo:
+
+Centralizar tudo que o jogador precisa saber para nao morrer.
+
+Estrutura obrigatoria:
+
+- lista de relatorios;
+- filtro por tipo;
+- marcador de nao lido;
+- paines de alerta critico;
+- mensagens de sistema.
+
+Categorias obrigatorias:
+
+- batalha;
+- espionagem;
+- saque;
+- apoio;
+- horda;
+- tributo;
+- sistema.
+
+Acoes principais:
+
+- abrir relatorio;
+- marcar como lido;
+- filtrar por tipo;
+- compartilhar com Tribo quando permitido;
+- ir para o local do evento.
+
+Estados especiais:
+
+- rei em risco;
+- morte do Rei;
+- sucessao acionada;
+- horda chegando;
+- tributo falhado;
+- Cidadela destruida;
+- fim de mundo.
+
+Regra de UX:
+
+Inteligencia precisa ser a tela com maior densidade de informacao, mas ainda assim facil de varrer em 5 segundos.
+
+
+==================================================
+14. SUBFLUXOS OBRIGATORIOS
+==================================================
+
+14.1 Fluxo de entrada no mundo
+
+Login -> Lobby -> Registrar no Mundo -> Bootstrap do jogador -> abrir Base da Capital inicial.
+
+14.2 Fluxo de upgrade de edificio
+
+Base -> clicar edificio -> abrir modal -> revisar custo e tempo -> confirmar -> job aparece em Operacoes.
+
+14.3 Fluxo de pesquisa
+
+Operacoes -> selecionar ramo -> escolher pesquisa -> confirmar -> progresso entra no cronograma.
+
+14.4 Fluxo de recrutamento
+
+Base -> Quartel ou Arsenal -> escolher unidade -> definir quantidade -> confirmar -> fila entra no cronograma.
+
+14.5 Fluxo de ataque
+
+Tabuleiro -> selecionar alvo -> Atacar -> escolher tropas, oficiais e carga -> revisar ETA -> confirmar -> movement criado -> relatorio ao resolver.
+
+14.6 Fluxo de espionagem
+
+Tabuleiro -> selecionar alvo -> Espionar -> enviar Espiao -> receber report em Inteligencia.
+
+14.7 Fluxo de apoio militar
+
+Tabuleiro ou Imperio -> selecionar aliado -> Apoiar -> escolher tropas -> confirmar -> guarnicao passa a existir no destino.
+
+14.8 Fluxo de doacao
+
+Tabuleiro ou relacao de Tribo -> Enviar recursos -> definir carga -> confirmar -> transporte entra em movimento.
+
+14.9 Fluxo da Coroa
+
+Tabuleiro ou Imperio -> escolher novo destino -> mover Rei ou Principe -> confirmar -> atualizar risco politico do jogador.
+
+14.10 Fluxo de sucessao
+
+Relatorio de ruptura -> sistema detecta morte do Rei -> verifica Principe e Colonia apta -> promove Capital ou marca estado fragil -> informa o jogador.
+
+14.11 Fluxo da Cidadela
+
+Tribo criada -> iniciar obra -> doar recursos -> concluir -> ganhar bonus -> sofrer ataque -> destruir ou defender -> aplicar Colapso se cair.
+
+14.12 Fluxo de tributo
+
+Alerta global -> abrir modal de tributo -> pagar com recursos proprios ou pedir ajuda -> confirmar -> remover risco ou sofrer penalidade.
+
+14.13 Fluxo de protocolo
+
+Operacoes -> alerta de crise -> abrir protocolos -> escolher foco ou sacrificio -> confirmar -> efeitos entram na aldeia ou no jogador.
+
+14.14 Fluxo de encerramento do mundo
+
+Dia 120 -> congelar ranking -> mostrar resultado -> entregar medalhas -> atualizar perfil global.
+
+
+==================================================
+15. COMPONENTES CORE
+==================================================
+
+Componentes que se repetem no produto inteiro:
+
+- village selector;
+- resource chip;
+- status badge;
+- timer chip;
+- report card;
+- timeline row;
+- world card;
+- village card;
+- site detail panel;
+- action modal;
+- protocol modal;
+- tribute modal;
+- alert banner;
+- unread counter.
+
+Regra:
+
+Esses componentes precisam nascer no design system do projeto. Nao devem ser refeitos em cada tela.
+
+
+==================================================
+16. ESTADOS DE CARREGAMENTO, VAZIO E ERRO
+==================================================
+
+Toda tela principal precisa ter:
+
+- loading claro;
+- empty state legivel;
+- erro recuperavel;
+- CTA de retorno ou retry.
+
+Exemplos minimos:
+
+- Imperio vazio antes da primeira expansao;
+- Operacoes sem fila;
+- Inteligencia sem novos reports;
+- Tabuleiro sem alvo selecionado;
+- Base sem acao desbloqueada suficiente;
+- lobby sem mundos disponiveis.
+
+
+==================================================
+17. RESPONSIVIDADE
+==================================================
+
+Mobile first:
+
+- bottom nav obrigatoria;
+- modais em bottom sheet quando fizer sentido;
+- lista vertical dominante;
+- header com informacao condensada;
+- mapa com painel colapsavel.
+
+Desktop:
+
+- paines laterais podem ficar abertos;
+- Operacoes pode virar split view real;
+- Inteligencia pode ter lista + detalhe ao mesmo tempo;
+- Imperio pode ter overview lateral persistente.
+
+Regra:
+
+Desktop melhora densidade.
+Nao muda a navegacao conceitual.
+
+
+==================================================
+18. HIERARQUIA DE ALERTAS
+==================================================
+
+Niveis de alerta:
+
+- Critico: Rei em risco, morte do Rei, sucessao, Cidadela sob ataque, horda iminente, tributo vencendo agora.
+- Alto: aldeia sob ataque, protocolo expirando, fila militar concluida, pesquisa concluida.
+- Medio: apoio chegando, doacao recebida, evento de fase, report nao lido relevante.
+- Baixo: melhorias concluidas, logs de rotina, world notices nao urgentes.
+
+Regra de UX:
+
+So alertas criticos podem sequestrar visualmente o topo da experiencia.
+Todo o resto disputa espaco por prioridade, nao por grito.
+
+
+==================================================
+19. DEFINICAO DE INTERFACE PRONTA
+==================================================
+
+A etapa de telas e fluxos estara pronta quando:
+
+- toda tela principal do shell do mundo estiver definida;
+- cada tela tiver objetivo, blocos, dados e acoes principais claros;
+- fluxos criticos de guerra, Coroa, Cidadela e Fase 2 estiverem mapeados;
+- os estados globais estiverem previstos;
+- o produto puder entrar em implementacao de frontend sem inventar regra no meio do caminho.
+
+
+==================================================
+20. STATUS
+==================================================
+
+Status deste documento: PRONTO PARA VIRAR IMPLEMENTACAO DE UX.
+
+Proximo artefato opcional:
+
+05. DESIGN SYSTEM / COMPONENTES
