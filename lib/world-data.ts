@@ -1,5 +1,6 @@
 import "server-only";
 
+import { worlds as mockWorldSummaries } from "@/lib/mock-data";
 import type {
   BoardSite,
   BuildingEntry,
@@ -11,7 +12,7 @@ import type {
   WorldState,
   WorldSummary,
 } from "@/lib/mock-data";
-import { inFilter, looksLikeUuid, supabaseSelect } from "@/lib/supabase-rest";
+import { inFilter, isSupabaseConfigured, looksLikeUuid, supabaseSelect } from "@/lib/supabase-rest";
 
 const WORLD_DURATION_DAYS = 120;
 const REAL_DAY_MS = 24 * 60 * 60 * 1000;
@@ -514,6 +515,10 @@ async function fetchHeroAssignments(worldPlayerId: string | null): Promise<numbe
 }
 
 export async function listWorldSummaries(): Promise<WorldSummary[]> {
+  if (!isSupabaseConfigured()) {
+    return mockWorldSummaries.map((world) => ({ ...world }));
+  }
+
   const params = new URLSearchParams();
   params.set("select", "id,slug,name,status,phase,day_number,runtime_started,runtime_real_time_enabled,runtime_anchor_day,runtime_anchor_started_at");
   const worlds = await supabaseSelect<DbWorld>("worlds", params);
