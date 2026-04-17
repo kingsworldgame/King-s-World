@@ -1,5 +1,6 @@
 ﻿import Link from "next/link";
 
+import { AuthSignOutButton } from "@/components/auth-signout-button";
 import { SectionCard, StatusBadge } from "@/components/ui";
 import { profile } from "@/lib/mock-data";
 
@@ -41,6 +42,7 @@ export default function ProfilePage() {
           <Link className="secondary-button" href="/lobby">
             Voltar ao lobby
           </Link>
+          <AuthSignOutButton />
         </div>
       </SectionCard>
     </main>

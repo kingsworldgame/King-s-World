@@ -36,7 +36,12 @@ export default function LoginPage() {
       return;
     }
 
-    router.replace("/lobby");
+    const nextPath =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search).get("next")
+        : null;
+    const safeNext = nextPath?.startsWith("/") ? nextPath : "/lobby";
+    router.replace(safeNext);
     router.refresh();
   }
 

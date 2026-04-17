@@ -1,24 +1,19 @@
 "use client";
 
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
+import { type SupabaseClient } from "@supabase/supabase-js";
+
+import { SUPABASE_PUBLIC_KEY, SUPABASE_URL, hasPublicSupabaseEnv } from "@/lib/supabase-env";
 
 let browserClient: SupabaseClient | null = null;
 
-function resolvePublicKey(): string {
-  return process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
-}
-
-export function hasPublicSupabaseEnv(): boolean {
-  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && resolvePublicKey());
-}
+export { hasPublicSupabaseEnv };
 
 export function getSupabaseBrowserClient(): SupabaseClient {
   if (browserClient) {
     return browserClient;
   }
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-  const key = resolvePublicKey();
-  browserClient = createClient(url, key);
+  browserClient = createBrowserClient(SUPABASE_URL, SUPABASE_PUBLIC_KEY);
   return browserClient;
 }

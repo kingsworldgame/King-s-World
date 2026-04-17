@@ -12,10 +12,12 @@ import type {
   WorldState,
   WorldSummary,
 } from "@/lib/mock-data";
-import { inFilter, isSupabaseConfigured, looksLikeUuid, supabaseSelect } from "@/lib/supabase-rest";
+import { getAuthenticatedUser } from "@/lib/supabase-server";
+import { inFilter, isSupabaseConfigured, looksLikeUuid, supabaseInsertReturning, supabaseSelect } from "@/lib/supabase-rest";
 
 const WORLD_DURATION_DAYS = 120;
 const REAL_DAY_MS = 24 * 60 * 60 * 1000;
+const RUNTIME_GAME_DAY_MS = Number(process.env.KINGSWORLD_RUNTIME_GAME_DAY_MS ?? REAL_DAY_MS);
 
 type DbWorld = {
   id: string;
@@ -43,6 +45,8 @@ type DbWorldPlayer = {
 type DbUser = {
   id: string;
   username: string;
+  email?: string;
+  auth_user_id?: string | null;
 };
 
 type DbVillage = {
@@ -175,8 +179,9 @@ function computeRuntime(world: DbWorld) {
   const anchorStartedAtMs = world.runtime_anchor_started_at ? Date.parse(world.runtime_anchor_started_at) : null;
 
   let day = started ? anchorDay : clampDay(world.day_number ?? 0);
+  const gameDayMs = Number.isFinite(RUNTIME_GAME_DAY_MS) && RUNTIME_GAME_DAY_MS > 0 ? RUNTIME_GAME_DAY_MS : REAL_DAY_MS;
   if (started && realTimeEnabled && anchorStartedAtMs) {
-    day = clampDay(anchorDay + Math.floor((Date.now() - anchorStartedAtMs) / REAL_DAY_MS));
+    day = clampDay(anchorDay + Math.floor((Date.now() - anchorStartedAtMs) / gameDayMs));
   }
 
   return {
@@ -261,6 +266,74 @@ async function fetchWorldPlayers(worldDbId: string): Promise<DbWorldPlayer[]> {
   params.set("select", "id,world_id,user_id,tribe_id,power_score_cached,status");
   params.set("world_id", `eq.${worldDbId}`);
   return supabaseSelect<DbWorldPlayer>("world_players", params);
+}
+
+function normalizeUsername(seed: string): string {
+  const cleaned = seed.toLowerCase().replace(/[^a-z0-9_]/g, "_").replace(/_+/g, "_").replace(/^_+|_+$/g, "");
+  return cleaned || `jogador_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+async function fetchOrCreateAppUser(authUser: { id: string; email?: string | null; user_metadata?: Record<string, unknown> | null }): Promise<DbUser> {
+  const byAuthParams = new URLSearchParams();
+  byAuthParams.set("select", "id,username,email,auth_user_id");
+  byAuthParams.set("auth_user_id", `eq.${authUser.id}`);
+  const existingByAuth = await supabaseSelect<DbUser>("users", byAuthParams);
+  if (existingByAuth[0]) {
+    return existingByAuth[0];
+  }
+
+  const email = authUser.email ?? `${authUser.id.slice(0, 8)}@users.kingsworld.local`;
+  const byEmailParams = new URLSearchParams();
+  byEmailParams.set("select", "id,username,email,auth_user_id");
+  byEmailParams.set("email", `eq.${email}`);
+  const existingByEmail = await supabaseSelect<DbUser>("users", byEmailParams);
+  if (existingByEmail[0]) {
+    if (!existingByEmail[0].auth_user_id) {
+      const patched = await supabaseInsertReturning<
+        { id: string; auth_user_id: string },
+        DbUser
+      >("users", { id: existingByEmail[0].id, auth_user_id: authUser.id }, "id");
+      return patched[0] ?? existingByEmail[0];
+    }
+    return existingByEmail[0];
+  }
+
+  const rawUsername = String(authUser.user_metadata?.username ?? email.split("@")[0] ?? "jogador");
+  const username = `${normalizeUsername(rawUsername)}_${authUser.id.slice(0, 6)}`;
+  const created = await supabaseInsertReturning<
+    { auth_user_id: string; username: string; email: string; account_status: "active" },
+    DbUser
+  >("users", {
+    auth_user_id: authUser.id,
+    username,
+    email,
+    account_status: "active",
+  });
+  if (!created[0]) {
+    throw new Error("Failed to create app user profile in Supabase.");
+  }
+  return created[0];
+}
+
+async function ensureWorldPlayer(worldId: string, appUserId: string): Promise<void> {
+  const params = new URLSearchParams();
+  params.set("select", "id");
+  params.set("world_id", `eq.${worldId}`);
+  params.set("user_id", `eq.${appUserId}`);
+  const existing = await supabaseSelect<Pick<DbWorldPlayer, "id">>("world_players", params);
+  if (existing[0]) {
+    return;
+  }
+
+  await supabaseInsertReturning<
+    { world_id: string; user_id: string; status: "alive"; power_score_cached: number },
+    Pick<DbWorldPlayer, "id">
+  >("world_players", {
+    world_id: worldId,
+    user_id: appUserId,
+    status: "alive",
+    power_score_cached: 0,
+  }, "world_id,user_id");
 }
 
 async function fetchUsers(userIds: string[]): Promise<Map<string, string>> {
@@ -562,8 +635,18 @@ export async function getWorldPayload(worldRouteId: string): Promise<WorldPayloa
 
   const worldRecord = await fetchWorldRecord(worldRouteId);
   const runtime = computeRuntime(worldRecord);
+  const authUser = await getAuthenticatedUser();
+  let appUserId: string | null = null;
+  if (authUser) {
+    const appUser = await fetchOrCreateAppUser(authUser);
+    appUserId = appUser.id;
+    await ensureWorldPlayer(worldRecord.id, appUser.id);
+  }
+
   const worldPlayers = await fetchWorldPlayers(worldRecord.id);
-  const currentWorldPlayer = worldPlayers[0] ?? null;
+  const currentWorldPlayer = appUserId
+    ? worldPlayers.find((entry) => entry.user_id === appUserId) ?? null
+    : worldPlayers[0] ?? null;
   const currentTribeId = currentWorldPlayer?.tribe_id ?? null;
   const usernameMap = await fetchUsers(Array.from(new Set(worldPlayers.map((entry) => entry.user_id))));
 

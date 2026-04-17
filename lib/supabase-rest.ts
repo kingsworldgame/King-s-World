@@ -1,18 +1,13 @@
 import "server-only";
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_KEY =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ??
-  process.env.SUPABASE_SECRET_KEY ??
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+import { SUPABASE_SERVER_KEY, SUPABASE_URL } from "@/lib/supabase-env";
 
 export function isSupabaseConfigured(): boolean {
-  return Boolean(SUPABASE_URL && SUPABASE_KEY);
+  return Boolean(SUPABASE_URL && SUPABASE_SERVER_KEY);
 }
 
 function requireSupabaseEnv() {
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
+  if (!SUPABASE_URL || !SUPABASE_SERVER_KEY) {
     throw new Error(
       "Supabase environment is not configured. Set NEXT_PUBLIC_SUPABASE_URL and one of: SUPABASE_SERVICE_ROLE_KEY, SUPABASE_SECRET_KEY, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.",
     );
@@ -20,7 +15,7 @@ function requireSupabaseEnv() {
 
   return {
     url: SUPABASE_URL.replace(/\/$/, ""),
-    key: SUPABASE_KEY,
+    key: SUPABASE_SERVER_KEY,
   };
 }
 
@@ -62,6 +57,29 @@ export async function supabaseUpsert<T>(table: string, payload: T | T[]): Promis
   if (!response.ok) {
     throw new Error(`Supabase upsert failed for ${table}: ${response.status} ${await response.text()}`);
   }
+}
+
+export async function supabaseInsertReturning<TIn, TOut>(table: string, payload: TIn | TIn[], onConflict?: string): Promise<TOut[]> {
+  const { url, key } = requireSupabaseEnv();
+  const query = onConflict ? `?on_conflict=${encodeURIComponent(onConflict)}` : "";
+  const response = await fetch(`${url}/rest/v1/${table}${query}`, {
+    method: "POST",
+    cache: "no-store",
+    headers: {
+      apikey: key,
+      Authorization: `Bearer ${key}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      Prefer: "resolution=merge-duplicates,return=representation",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Supabase insert failed for ${table}: ${response.status} ${await response.text()}`);
+  }
+
+  return response.json() as Promise<TOut[]>;
 }
 
 export function inFilter(values: string[]): string {
