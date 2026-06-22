@@ -1,7 +1,7 @@
 {
   "status": "FAIL",
   "outputBasename": "season_v2_120d",
-  "generatedAt": "2026-06-02T02:02:51.103Z",
+  "generatedAt": "2026-06-06T21:25:06.232Z",
   "errors": [
     "playbooks.metropole.branch: vazio.",
     "playbooks.metropole.secondVillageDay: invalido.",

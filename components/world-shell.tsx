@@ -3,7 +3,7 @@
 import type { ChangeEvent, ReactNode } from "react";
 import { Compass, HelpCircle, Target, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams, useSelectedLayoutSegment } from "next/navigation";
-import { startTransition, useEffect, useMemo, useState } from "react";
+import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { Header } from "@/components/Header";
@@ -69,8 +69,8 @@ const WORLD_PRELOAD_IMAGES = [
   "/cities/postoavancado-icon.png",
 ];
 
-const WORLD_BOOT_MIN_MS = 2400;
-const WORLD_BOOT_MAX_MS = 5000;
+const WORLD_BOOT_MIN_MS = 900;
+const WORLD_BOOT_MAX_MS = 2600;
 
 function resolveKingPortraitStyle(kingId: KingProfileId): { backgroundPositionY: string; backgroundSize: string } {
   void kingId;
@@ -98,6 +98,38 @@ function compactAmount(value: number): string {
     return `${formatted.replace(/\.0$/, "")}k`;
   }
   return `${value}`;
+}
+
+type LocalKingSelection = {
+  profileId: KingProfileId;
+  name: string;
+};
+
+function kingSelectionStorageKey(worldId: string) {
+  return `kingsworld:${worldId}:king-selection`;
+}
+
+function readLocalKingSelection(worldId: string): LocalKingSelection | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(kingSelectionStorageKey(worldId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<LocalKingSelection>;
+    const profileId = KING_PROFILES.some((profile) => profile.id === parsed.profileId) ? parsed.profileId : null;
+    const name = typeof parsed.name === "string" && parsed.name.trim().length > 0 ? parsed.name.trim().slice(0, 32) : null;
+    return profileId && name ? { profileId, name } : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalKingSelection(worldId: string, selection: LocalKingSelection) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(kingSelectionStorageKey(worldId), JSON.stringify(selection));
+  } catch {
+    // Local persistence is a fallback, not a blocker.
+  }
 }
 
 function TopMetric({
@@ -154,10 +186,13 @@ export function WorldShell({
   const [kingNameDraft, setKingNameDraft] = useState("");
   const [kingSelectionSaving, setKingSelectionSaving] = useState(false);
   const [kingSelectionError, setKingSelectionError] = useState<string | null>(null);
+  const [localKingSelection, setLocalKingSelection] = useState<LocalKingSelection | null>(null);
   const [endModalOpen, setEndModalOpen] = useState(false);
   const [bootReady, setBootReady] = useState(false);
   const [bootProgress, setBootProgress] = useState(0);
   const [bootBypass, setBootBypass] = useState(false);
+  const localKingSyncRef = useRef("");
+  const knownParticipantIdsRef = useRef<Set<string> | null>(null);
 
   const liveWorld = useLiveWorld(worldId, initialPayload);
   const { world, worldMeta, runtimeState, isSandboxWorld, campaignDate } = liveWorld;
@@ -167,6 +202,37 @@ export function WorldShell({
     () => KING_PROFILES.find((profile) => profile.id === selectedKingId) ?? KING_PROFILES[0],
     [selectedKingId],
   );
+
+  useEffect(() => {
+    const currentIds = new Set(world.participants.map((participant) => participant.id));
+    if (!knownParticipantIdsRef.current) {
+      knownParticipantIdsRef.current = currentIds;
+      return;
+    }
+
+    const previousIds = knownParticipantIdsRef.current;
+    const newParticipants = world.participants.filter((participant) => !previousIds.has(participant.id));
+    knownParticipantIdsRef.current = currentIds;
+
+    const humanParticipant = newParticipants.find((participant) => !participant.isAi);
+    if (humanParticipant) {
+      emitUiToast({
+        tone: "success",
+        title: "Novo jogador entrou",
+        message: `${humanParticipant.name} agora disputa este mundo.`,
+      });
+      return;
+    }
+
+    if (newParticipants.length > 0) {
+      emitUiToast({
+        tone: "success",
+        title: "Participantes atualizados",
+        message: `${newParticipants.length} IA${newParticipants.length > 1 ? "s" : ""} completaram o mundo.`,
+      });
+    }
+  }, [world.participants]);
+
   const mergedVillages = mergeImperialVillages(world.villages, imperialState);
   const selectedVillageId = searchParams.get("v") ?? world.activeVillageId;
   const evolutionMode = searchParams.get("m");
@@ -366,7 +432,7 @@ export function WorldShell({
     ? buildSandboxCoachCta(world.day, imperialState.sandboxStrategyId, capitalVillageId, focusVillageId)
     : null;
   const waitingForKingState = !isImperialStateReady && !worldMeta.readOnly;
-  const needsKingSelection = isImperialStateReady && isImperialStateHydrated && !imperialState.kingProfileId && !worldMeta.readOnly;
+  const needsKingSelection = isImperialStateReady && isImperialStateHydrated && !imperialState.kingProfileId && !localKingSelection && !worldMeta.readOnly;
   const showWorldChrome = !waitingForKingState && !needsKingSelection;
   const worldTabHrefs = useMemo(() => {
     const tabs: WorldTab[] = ["empire", "base", "intelligence", "board", "guide"];
@@ -415,6 +481,60 @@ export function WorldShell({
       setEndModalOpen(true);
     }
   }, [campaignEnded]);
+
+  useEffect(() => {
+    const stored = readLocalKingSelection(worldId);
+    setLocalKingSelection(stored);
+    if (stored) {
+      setSelectedKingId(stored.profileId);
+      setKingNameDraft(stored.name);
+    } else {
+      setKingNameDraft("");
+    }
+    setKingSelectionError(null);
+  }, [worldId]);
+
+  useEffect(() => {
+    if (!isImperialStateReady || !isImperialStateHydrated || worldMeta.readOnly) {
+      return;
+    }
+    if (imperialState.kingProfileId) {
+      const name = imperialState.kingName?.trim() || (KING_PROFILES.find((profile) => profile.id === imperialState.kingProfileId)?.name ?? "");
+      if (name) {
+        const selection = { profileId: imperialState.kingProfileId, name: name.slice(0, 32) };
+        setLocalKingSelection((current) =>
+          current?.profileId === selection.profileId && current.name === selection.name ? current : selection,
+        );
+        writeLocalKingSelection(worldId, selection);
+      }
+      return;
+    }
+    if (!localKingSelection) {
+      return;
+    }
+    const syncSignature = `${worldId}:${localKingSelection.profileId}:${localKingSelection.name}`;
+    if (localKingSyncRef.current === syncSignature) {
+      return;
+    }
+    localKingSyncRef.current = syncSignature;
+    void setImperialState((current) => ({
+      ...current,
+      kingProfileId: localKingSelection.profileId,
+      kingName: localKingSelection.name,
+      logs: current.logs.some((entry) => entry.includes(`Coroa assumida por ${localKingSelection.name}`))
+        ? current.logs
+        : [`Coroa assumida por ${localKingSelection.name}.`, ...current.logs].slice(0, 12),
+    }));
+  }, [
+    imperialState.kingName,
+    imperialState.kingProfileId,
+    isImperialStateHydrated,
+    isImperialStateReady,
+    localKingSelection,
+    setImperialState,
+    worldId,
+    worldMeta.readOnly,
+  ]);
 
   useEffect(() => {
     setBootReady(false);
@@ -529,33 +649,35 @@ export function WorldShell({
     }
 
     const name = kingNameDraft.trim() || selectedKingProfile.name;
+    const savedSelection = { profileId: selectedKingProfile.id, name: name.slice(0, 32) };
     setKingSelectionSaving(true);
     setKingSelectionError(null);
+    setLocalKingSelection(savedSelection);
+    writeLocalKingSelection(worldId, savedSelection);
 
     try {
       const persisted = await setImperialState((current) => ({
         ...current,
-        kingProfileId: selectedKingProfile.id,
-        kingName: name.slice(0, 32),
-        logs: [`Coroa assumida por ${name.slice(0, 32)}.`, ...current.logs].slice(0, 12),
+        kingProfileId: savedSelection.profileId,
+        kingName: savedSelection.name,
+        logs: [`Coroa assumida por ${savedSelection.name}.`, ...current.logs].slice(0, 12),
       }));
 
         if (!persisted) {
-          setKingSelectionError("A Coroa ficou no aparelho, mas ainda não confirmou no Supabase. Tente novamente antes de recarregar.");
+          setKingSelectionError("A Coroa ficou salva neste aparelho. Vou tentar confirmar no Supabase de novo em segundo plano.");
           emitUiFeedback("close", "medium");
           emitUiToast({
-            tone: "error",
-            title: "Coroa não confirmou no banco",
-            message: "Tente novamente antes de recarregar.",
+            tone: "info",
+            title: "Coroa salva localmente",
+            message: "Se o Supabase oscilar, este mundo não vai pedir a escolha de novo neste aparelho.",
           });
-          return;
         }
 
         emitUiFeedback("open", "medium");
         emitUiToast({
           tone: "success",
           title: "Coroa assumida",
-          message: `${name.slice(0, 32)} foi salvo nesta campanha.`,
+          message: `${savedSelection.name} foi salvo nesta campanha.`,
         });
         setHelpOpen(true);
       } finally {
@@ -820,15 +942,56 @@ export function WorldShell({
       {needsKingSelection ? (
         <div className="fixed inset-0 z-[95]">
           <div className="absolute inset-0 bg-slate-950/84 backdrop-blur-md" />
-          <section data-smoke="king-selection-modal" className="absolute inset-x-3 top-[calc(env(safe-area-inset-top)+10px)] mx-auto max-h-[calc(100vh-1.25rem)] w-full max-w-md overflow-y-auto rounded-[32px] border border-white/20 bg-slate-950/94 p-3 shadow-[0_34px_80px_rgba(2,6,23,0.72)]">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-100/80">Primeira entrada no mundo</p>
-            <h2 className="mt-1 text-[26px] font-black leading-none text-slate-50">Escolha sua Coroa</h2>
-            <p className="mt-1.5 text-[11px] leading-5 text-slate-300">
-              Este personagem pertence a esta campanha. Seu nick de conta fica separado no lobby e no perfil.
-            </p>
-            <div className="mt-2 rounded-2xl border border-amber-300/24 bg-amber-500/12 p-2.5 text-[10px] leading-4 text-amber-50">
-              Objetivo da temporada: construir um reino vivo, passar de <strong>1500 de influência</strong> e chegar ao Exodo sem perder a Coroa.
+          <section
+            data-smoke="king-selection-modal"
+            className="absolute inset-x-3 top-[calc(env(safe-area-inset-top)+10px)] mx-auto flex max-h-[calc(100vh-1.25rem)] w-full max-w-md flex-col overflow-hidden rounded-[28px] border border-cyan-200/24 bg-slate-950 text-slate-50 shadow-[0_34px_80px_rgba(2,6,23,0.72)]"
+          >
+            <div className="border-b border-white/10 bg-slate-950 px-4 pb-3 pt-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200">Primeira entrada no mundo</p>
+              <h2 className="mt-1 text-[26px] font-black leading-none text-white">Escolha sua Coroa</h2>
+              <p className="mt-2 text-[11px] font-semibold leading-5 text-slate-300">
+                Este personagem pertence a esta campanha. O nome escolhido fica salvo neste mundo.
+              </p>
             </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-3">
+              <div
+                className="overflow-hidden rounded-2xl border border-cyan-200/35 bg-slate-900 shadow-[0_18px_38px_rgba(0,0,0,0.35)]"
+                style={{
+                  ...(() => {
+                    const portraitStyle = resolveKingPortraitStyle(selectedKingProfile.id);
+                    return {
+                      backgroundPosition: `center ${portraitStyle.backgroundPositionY}`,
+                      backgroundSize: portraitStyle.backgroundSize,
+                    };
+                  })(),
+                  backgroundImage: `linear-gradient(90deg, rgba(2,6,23,0.96) 0%, rgba(2,6,23,0.9) 48%, rgba(2,6,23,0.46) 100%), url('${selectedKingProfile.imageSrc}')`,
+                }}
+              >
+                <div className="p-3 pr-24">
+                  <p className="text-[9px] font-black uppercase tracking-[0.16em] text-cyan-100">{selectedKingProfile.title} selecionado</p>
+                  <h3 className="mt-1 text-xl font-black leading-tight text-white">{selectedKingProfile.name}</h3>
+                  <p className="mt-1 text-[11px] font-semibold leading-4 text-slate-200">{selectedKingProfile.summary}</p>
+                  <div className="mt-2 grid grid-cols-1 gap-1.5">
+                    {selectedKingProfile.traits.map((trait) => (
+                      <span
+                        key={`selected-${trait.label}`}
+                        className={`rounded-xl border px-2.5 py-1.5 text-[10px] font-black ${
+                          trait.tone === "bonus"
+                            ? "border-emerald-300/45 bg-emerald-400/18 text-emerald-50"
+                            : "border-rose-300/45 bg-rose-400/18 text-rose-50"
+                        }`}
+                      >
+                        {trait.label}: {trait.value}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3 rounded-2xl border border-amber-300/28 bg-amber-500/12 p-2.5 text-[10px] font-semibold leading-4 text-amber-50">
+                Objetivo da temporada: construir um reino vivo, passar de <strong>1500 de influência</strong> e chegar ao Exodo sem perder a Coroa.
+              </div>
 
               <div className="mt-3 grid grid-cols-2 gap-2">
                 {KING_PROFILES.map((profile) => {
@@ -844,26 +1007,26 @@ export function WorldShell({
                       setKingNameDraft((current) => current || profile.name);
                       emitUiFeedback("tap", "light");
                     }}
-                    className={`min-h-[208px] overflow-hidden rounded-[24px] border text-left shadow-lg transition active:scale-95 ${
-                      active ? "border-cyan-200/80 bg-cyan-500/16" : "border-white/12 bg-white/6"
+                    className={`min-h-[176px] overflow-hidden rounded-[22px] border text-left shadow-lg transition active:scale-95 ${
+                      active ? "border-cyan-200 bg-cyan-500/18 ring-2 ring-cyan-200/25" : "border-white/14 bg-slate-900"
                     }`}
                       style={{
-                        backgroundImage: `linear-gradient(180deg, rgba(2,6,23,0), rgba(2,6,23,0.26) 48%, rgba(2,6,23,0.94)), url('${profile.imageSrc}')`,
+                        backgroundImage: `linear-gradient(180deg, rgba(2,6,23,0.18), rgba(2,6,23,0.54) 44%, rgba(2,6,23,0.98)), url('${profile.imageSrc}')`,
                         backgroundPosition: `center ${portraitStyle.backgroundPositionY}`,
                         backgroundSize: portraitStyle.backgroundSize,
                       }}
                     >
-                    <div className="flex h-full min-h-[208px] flex-col justify-end p-2.5">
-                      <p className="text-[8px] font-black uppercase tracking-[0.14em] text-cyan-100/85">{profile.title}</p>
-                      <p className="mt-0.5 text-[12px] font-black leading-tight text-slate-50 drop-shadow-[0_2px_8px_rgba(0,0,0,0.82)]">{profile.name}</p>
+                    <div className="flex h-full min-h-[176px] flex-col justify-end p-2.5">
+                      <p className="text-[8px] font-black uppercase tracking-[0.14em] text-cyan-100">{profile.title}</p>
+                      <p className="mt-0.5 text-[13px] font-black leading-tight text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">{profile.name}</p>
                       <div className="mt-1 flex flex-wrap gap-1">
                         {profile.traits.map((trait) => (
                           <span
                             key={`${profile.id}-${trait.label}`}
                             className={`rounded-full border px-1.5 py-0.5 text-[8px] font-black ${
                               trait.tone === "bonus"
-                                ? "border-emerald-300/35 bg-emerald-400/16 text-emerald-100"
-                                : "border-rose-300/35 bg-rose-400/16 text-rose-100"
+                                ? "border-emerald-300/45 bg-emerald-400/22 text-emerald-50"
+                                : "border-rose-300/45 bg-rose-400/22 text-rose-50"
                             }`}
                           >
                             {trait.label}: {trait.value}
@@ -875,70 +1038,35 @@ export function WorldShell({
                 );
               })}
             </div>
-
-            <div
-              className="mt-3 overflow-hidden rounded-[28px] border border-white/16 bg-white/8"
-              style={{
-                ...(() => {
-                  const portraitStyle = resolveKingPortraitStyle(selectedKingProfile.id);
-                  return {
-                    backgroundPosition: `center ${portraitStyle.backgroundPositionY}`,
-                    backgroundSize: portraitStyle.backgroundSize,
-                  };
-                })(),
-                backgroundImage: `linear-gradient(180deg, rgba(2,6,23,0), rgba(2,6,23,0.26) 48%, rgba(2,6,23,0.95)), url('${selectedKingProfile.imageSrc}')`,
-              }}
-            >
-              <div className="p-3 pt-52">
-                <div className="rounded-2xl border border-white/14 bg-slate-950/72 p-2.5 backdrop-blur-xl">
-                  <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-400">{selectedKingProfile.title}</p>
-                  <h3 className="mt-0.5 text-base font-black text-slate-50">{selectedKingProfile.name}</h3>
-                  <p className="mt-0.5 text-[10px] leading-4 text-slate-200">{selectedKingProfile.summary}</p>
-                  <div className="mt-2 grid grid-cols-2 gap-1.5">
-                    {selectedKingProfile.traits.map((trait) => (
-                      <span
-                        key={`selected-${trait.label}`}
-                        className={`rounded-xl border px-2 py-1 text-center text-[10px] font-black ${
-                          trait.tone === "bonus"
-                            ? "border-emerald-300/35 bg-emerald-400/16 text-emerald-100"
-                            : "border-rose-300/35 bg-rose-400/16 text-rose-100"
-                        }`}
-                      >
-                        {trait.label}: {trait.value}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
             </div>
-
-            <label className="mt-3 block text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400" htmlFor="king-name">
-              Nome do rei ou rainha
-            </label>
-            <input
-              id="king-name"
-              data-smoke="king-name-input"
-              value={kingNameDraft}
-              onChange={(event) => setKingNameDraft(event.target.value)}
-              maxLength={32}
-              placeholder={selectedKingProfile.name}
-              className="relative z-10 mt-2 w-full rounded-2xl border border-white/18 px-3 py-3 text-sm font-bold text-slate-50 outline-none placeholder:text-slate-500"
-              style={{ background: "rgb(2 6 23)" }}
-            />
-            <button
-              type="button"
-              onClick={confirmKingSelection}
-              data-smoke="confirm-king-selection"
-              disabled={kingSelectionSaving}
-              className="mt-4 w-full rounded-2xl border border-cyan-200/45 bg-cyan-400/20 px-4 py-3 text-sm font-black text-cyan-50 shadow-[0_18px_38px_rgba(8,47,73,0.32)] active:scale-95"
-            >
-              {kingSelectionSaving ? "Salvando Coroa..." : "Começar campanha"}
-            </button>
-            {kingSelectionError ? (
-              <p className="mt-3 rounded-2xl border border-amber-300/30 bg-amber-500/12 px-3 py-2 text-[11px] font-bold leading-5 text-amber-50">
-                {kingSelectionError}
-              </p>
-            ) : null}
+            <div className="shrink-0 border-t border-white/10 bg-slate-950/98 p-4 shadow-[0_-18px_32px_rgba(2,6,23,0.58)]">
+              <label className="block text-[10px] font-black uppercase tracking-[0.16em] text-slate-300" htmlFor="king-name">
+                Nome do rei ou rainha
+              </label>
+              <input
+                id="king-name"
+                data-smoke="king-name-input"
+                value={kingNameDraft}
+                onChange={(event) => setKingNameDraft(event.target.value)}
+                maxLength={32}
+                placeholder={selectedKingProfile.name}
+                className="mt-2 w-full rounded-2xl border border-cyan-200/24 bg-slate-900 px-3 py-3 text-sm font-bold text-white outline-none placeholder:text-slate-500 focus:border-cyan-200/70"
+              />
+              <button
+                type="button"
+                onClick={confirmKingSelection}
+                data-smoke="confirm-king-selection"
+                disabled={kingSelectionSaving}
+                className="mt-3 w-full rounded-2xl border border-cyan-200/60 bg-cyan-500 px-4 py-3 text-sm font-black text-slate-950 shadow-[0_18px_38px_rgba(8,145,178,0.30)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-65"
+              >
+                {kingSelectionSaving ? "Salvando Coroa..." : `Começar com ${kingNameDraft.trim() || selectedKingProfile.name}`}
+              </button>
+              {kingSelectionError ? (
+                <p className="mt-3 rounded-2xl border border-amber-300/30 bg-amber-500/12 px-3 py-2 text-[11px] font-bold leading-5 text-amber-50">
+                  {kingSelectionError}
+                </p>
+              ) : null}
+            </div>
           </section>
         </div>
       ) : null}

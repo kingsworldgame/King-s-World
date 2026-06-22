@@ -41,6 +41,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Este mundo já foi finalizado." }, { status: 410 });
     }
 
+    if (world.status !== "open") {
+      return NextResponse.json({ error: "A entrada deste mundo ja foi encerrada - o reino comecou." }, { status: 403 });
+    }
+
     if (world.joins_closed_at) {
       return NextResponse.json({ error: "A entrada deste mundo já foi encerrada — o reino começou." }, { status: 403 });
     }
@@ -49,9 +53,7 @@ export async function POST(request: Request) {
     // Não-fatal — se falhar, o jogador entra na mesma.
     void ensureWorldFilled(world.id, world.slug).catch(() => undefined);
 
-    const href = world.status === "finalized"
-      ? `/world/${world.slug}/report`
-      : `/world/${world.slug}/intelligence`;
+    const href = `/world/${world.slug}/intelligence`;
 
     return NextResponse.json({
       ok: true,

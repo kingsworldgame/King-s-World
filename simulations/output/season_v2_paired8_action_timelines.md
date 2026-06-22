@@ -143,8 +143,8 @@
 - Perfil: Posto Avancado
 - Branch: defensive
 - Resultado: Falhou (influencia_insuficiente)
-- Influencia D15/D30/D60/D90/D120: 111/332/686/1224/1028
-- 2a aldeia: D19 | 1a aldeia 100: D46 | ETA: 114.21h
+- Influencia D15/D30/D60/D90/D120: 111/332/685/1222/811
+- 2a aldeia: D19 | 1a aldeia 100: D46 | ETA: 109.69h
 
 | Dia | Fase | Tipo | Acao | Detalhe |
 | ---: | --- | --- | --- | --- |
@@ -165,10 +165,10 @@
 | 46 | II | upgrade | Primeira aldeia atingiu 100/100 | A partir daqui a run pode converter desenvolvimento em teto de score e Maravilha. |
 | 61 | III | hero | Contratou Marechal | Especialista alinhado com a branch defensive. |
 | 90 | III | group | Agrupamento liberado na Capital | A partir daqui o jogador pode converter império em marcha final. |
-| 91 | IV | tribe | Ativou Domo da Tribo | Bônus tribal convertido em score de sobrevivencia no late game. |
-| 110 | IV | horde | Horda rompeu 4 aldeias | A run caiu de 6 para 3 aldeias no fim. |
-| 113 | IV | march | Iniciou marcha ao Portal | ETA 114.21h; influencia projetada no fim 1028. |
-| 118 | IV | outcome | Falhou no endgame | Barrado por influencia insuficiente (1028). |
+| 98 | IV | expand | Perdeu 1 cidade(s) para PvP | Ataques de outros soberanos romperam parte do imperio no late game. |
+| 110 | IV | horde | Horda rompeu 4 aldeias | A run caiu de 6 para 2 aldeias no fim. |
+| 113 | IV | march | Iniciou marcha ao Portal | ETA 109.69h; influencia projetada no fim 811. |
+| 118 | IV | outcome | Falhou no endgame | Barrado por influencia insuficiente (811). |
 
 ## Seed 90743702 - bastiao-perfect
 

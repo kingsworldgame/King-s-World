@@ -1,5 +1,5 @@
 phase,start,end,avgInfluence,avgEligiblePortal,avgTroops,avgVillages
-I: Consolidacao,1,20,143.82,0,400.1,1.61
-II: Expansao,21,60,674.86,1.44,881.41,4.39
-III: Fortificacao,61,90,1535.49,27.38,1603.48,7.93
-IV: Exodo,91,120,1426.6,20.5,849.04,5.49
+I: Consolidacao,1,20,143.82,0,400.15,1.61
+II: Expansao,21,60,674.4,1.44,881.56,4.39
+III: Fortificacao,61,90,1534.46,27,1603.79,7.93
+IV: Exodo,91,120,1430.54,20.75,849.05,5.56

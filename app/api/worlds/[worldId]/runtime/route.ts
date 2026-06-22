@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 
 import { requireAuthenticatedAppUser } from "@/lib/app-user";
+import { ensureWorldFilled } from "@/lib/npc-fill";
 import { looksLikeUuid, supabasePatchReturning, supabaseSelect } from "@/lib/supabase-rest";
+import { normalizeWorldPlayerCap } from "@/lib/world-rules";
 
 type RuntimeAction = "start_now" | "schedule_midnight";
 
@@ -10,6 +12,7 @@ type WorldRow = {
   slug: string;
   status: "open" | "running" | "finalized";
   day_number: number;
+  player_cap?: number | null;
 };
 
 function normalizeAction(value: unknown): RuntimeAction {
@@ -33,7 +36,7 @@ function nextSaoPauloMidnight() {
 
 async function fetchWorld(worldId: string): Promise<WorldRow | null> {
   const params = new URLSearchParams();
-  params.set("select", "id,slug,status,day_number");
+  params.set("select", "id,slug,status,day_number,player_cap");
   params.set(looksLikeUuid(worldId) ? "id" : "slug", `eq.${worldId}`);
   params.set("limit", "1");
   const rows = await supabaseSelect<WorldRow>("worlds", params);
@@ -59,11 +62,13 @@ export async function POST(
     const action = normalizeAction((body as { action?: unknown }).action);
     const now = new Date();
     const startsAt = action === "schedule_midnight" ? nextSaoPauloMidnight() : now;
+    const fillResult = await ensureWorldFilled(world.id, world.slug, normalizeWorldPlayerCap(world.player_cap));
     const update =
       action === "schedule_midnight"
         ? {
             status: "open" as const,
             starts_at: startsAt.toISOString(),
+            joins_closed_at: now.toISOString(),
             runtime_started: false,
             runtime_real_time_enabled: true,
             runtime_anchor_day: Math.max(0, Math.floor(Number(world.day_number ?? 0))),
@@ -73,6 +78,7 @@ export async function POST(
         : {
             status: "running" as const,
             starts_at: startsAt.toISOString(),
+            joins_closed_at: now.toISOString(),
             runtime_started: true,
             runtime_real_time_enabled: true,
             runtime_anchor_day: Math.max(0, Math.floor(Number(world.day_number ?? 0))),
@@ -89,6 +95,7 @@ export async function POST(
       action,
       world: rows[0] ?? world,
       startsAt: startsAt.toISOString(),
+      participants: fillResult,
     });
   } catch (error) {
     return NextResponse.json(

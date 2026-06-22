@@ -1,5 +1,5 @@
 // KingsWorld — Edge Function: resolve-combat
-// Chamada pelo tick (pg_cron) para resolver ordens de ataque pending_resolution.
+// Chamada pelo tick (pg_cron) para resolver ordens de ataque em status resolving.
 // Porta processKingsWorldCombat para o servidor.
 // Deploy: npx supabase functions deploy resolve-combat --project-ref wdmrdovkkrgzalnpqdxe
 
@@ -8,6 +8,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
 const SUPABASE_URL              = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const CRON_SECRET               = Deno.env.get("CRON_SECRET")!;
 
 // ---------------------------------------------------------------------------
 // Motor de combate (portado de lib/combat-engine.ts)
@@ -106,14 +107,18 @@ serve(async (req) => {
     return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405 });
   }
 
+  if (!CRON_SECRET || req.headers.get("x-cron-secret") !== CRON_SECRET) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+  }
+
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Busca ordens de ataque pending_resolution
+    // Busca ordens de ataque que chegaram e foram marcadas pelo cron como resolving.
     const { data: orders, error: fetchErr } = await supabase
       .from("world_player_map_orders")
       .select("id, world_id, world_player_id, target_site_id, troop_dispatch_json, meta_json")
-      .eq("status", "pending_resolution")
+      .eq("status", "resolving")
       .eq("command_action", "attack")
       .order("arrival_at", { ascending: true })
       .limit(50);
@@ -171,7 +176,7 @@ serve(async (req) => {
         await supabase
           .from("world_player_map_orders")
           .update({
-            status:      "completed",
+            status:      "resolved",
             result_code: result.winner,
             resolved_at: new Date().toISOString(),
             meta_json:   { ...(order.meta_json as object), combatResult: result },

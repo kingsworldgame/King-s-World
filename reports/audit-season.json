@@ -1,9 +1,9 @@
 {
   "status": "PASS",
-  "generatedAt": "2026-05-04T20:53:32.943Z",
+  "generatedAt": "2026-06-22T12:35:43.841Z",
   "execution": {
     "status": 0,
-    "stdout": "Simulacao concluida.\nStatus dos artefatos: PASS\nStatus da auditoria: PASS\nIteracao de calibragem: 2\nMedia 2a aldeia: 15.3\nMedia 1a aldeia 100: 44.64\nMedia sobreviventes no Portal/seed: 16.13\nMedia elegiveis >=1500 no D90/seed: 26.63\nETA Navegador+Flow (media): 44.52h\nPico 2500 por seed: 1",
+    "stdout": "Simulacao concluida.\nStatus dos artefatos: PASS\nStatus da auditoria: PASS\nIteracao de calibragem: 6\nMedia 2a aldeia: 15.21\nMedia 1a aldeia 100: 44.56\nMedia sobreviventes no Portal/seed: 15.75\nMedia elegiveis >=1500 no D90/seed: 27\nETA Navegador+Flow (media): 45.18h\nPico 2500 por seed: 1",
     "stderr": ""
   },
   "checks": {

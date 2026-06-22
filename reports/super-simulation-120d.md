@@ -1,6 +1,6 @@
 # Super Simulacao KingsWorld - Mundo 120 Meses
 
-Gerado em: 2026-05-04T20:53:32.994Z
+Gerado em: 2026-06-06T21:44:57.543Z
 
 ## Escopo
 
@@ -15,54 +15,54 @@ Gerado em: 2026-05-04T20:53:32.994Z
 
 ## Veredito Rapido
 
-- Entradas no Portal: 129/400 (32.3%).
-- Jogadores vivos no fim: 129/400 (32.3%).
-- Influencia media D90: 1536.79.
-- Influencia media D120: 1412.17.
-- Aldeias medias D90/D120: 7.92 / 5.36.
-- Tropas medias D120: 844.5.
-- Cartografia media: 79.77 meses de expedicao, 125.36 hexes de rota conhecida e 17.93 regioes de fronteira por jogador.
+- Entradas no Portal: 126/400 (31.5%).
+- Jogadores vivos no fim: 126/400 (31.5%).
+- Influencia media D90: 1536.35.
+- Influencia media D120: 1430.54.
+- Aldeias medias D90/D120: 7.93 / 5.56.
+- Tropas medias D120: 849.05.
+- Cartografia media: 79.75 meses de expedicao, 125.1 hexes de rota conhecida e 17.88 regioes de fronteira por jogador.
 
 ## Humanos vs IA
 
 | Grupo | Amostra | Portal | Vivos | Infl. D90 | Infl. D120 | Tropas D120 | Aldeias D120 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Humanos | 64 | 40.6% | 40.6% | 1517.28 | 1434.38 | 823.63 | 5.77 |
-| IA | 336 | 30.7% | 30.7% | 1540.5 | 1407.94 | 848.47 | 5.28 |
+| Humanos | 64 | 39.1% | 39.1% | 1516.97 | 1454.08 | 823.27 | 5.94 |
+| IA | 336 | 30.1% | 30.1% | 1540.04 | 1426.05 | 853.96 | 5.48 |
 
 ## Perfis
 
 | Perfil | Amostra | Portal | Infl. D90 | Infl. D120 | Tropas D120 | Perda Horda | Meses Exp. | Regioes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| metropole | 92 | 29.3% | 1663.23 | 1428.38 | 708.37 | 2.42 | 74.23 | 16.85 |
-| bastiao | 101 | 41.6% | 1394.67 | 1508.93 | 1059.02 | 1.3 | 67.31 | 15.31 |
-| celeiro | 107 | 28% | 1558.4 | 1345.48 | 753.15 | 2.59 | 83.8 | 18.74 |
-| posto | 100 | 30% | 1540.87 | 1370.9 | 850.8 | 2.72 | 93.14 | 20.73 |
+| metropole | 93 | 26.9% | 1672.01 | 1486.7 | 719.92 | 1.98 | 74.65 | 16.81 |
+| bastiao | 101 | 36.6% | 1388.96 | 1495.74 | 1053.43 | 1.36 | 67.17 | 15.29 |
+| celeiro | 106 | 29.2% | 1562.7 | 1384.29 | 759.82 | 2.39 | 83.92 | 18.66 |
+| posto | 100 | 33% | 1531.12 | 1361.46 | 857.28 | 2.64 | 92.79 | 20.65 |
 
 ## Exploracao E Acontecimentos
 
 - Isto agora deve ser lido como descoberta territorial, nao coleta.
-- Meses medios com expedicao ativa por jogador: 79.77/120.
-- Hexes medios de rota/corredor conhecidos por jogador: 125.36.
-- Regioes medias de fronteira abertas por jogador: 17.93.
-- Descobertas estrategicas medias: 7.64.
-- Saque/loot existe como efeito secundario medio: 294.9.
-- Primeiro ciclo forte de cartografia: por volta do Mes 11.3 do Ano 1.
+- Meses medios com expedicao ativa por jogador: 79.75/120.
+- Hexes medios de rota/corredor conhecidos por jogador: 125.1.
+- Regioes medias de fronteira abertas por jogador: 17.88.
+- Descobertas estrategicas medias: 7.6.
+- Saque/loot existe como efeito secundario medio: 291.89.
+- Primeiro ciclo forte de cartografia: por volta do Mes 11.21 do Ano 1.
 
 | Tipo de acontecimento | Registros |
 | --- | --- |
 | upgrade | 3600 |
-| expand | 1735 |
-| hero | 1543 |
-| quest | 661 |
-| wonder | 530 |
+| expand | 1734 |
+| hero | 1518 |
+| quest | 670 |
+| wonder | 526 |
 | explore | 400 |
 | recruit | 400 |
 | group | 400 |
 | horde | 400 |
 | march | 400 |
 | outcome | 400 |
-| tribe | 275 |
+| tribe | 269 |
 
 ### Indicacao Pratica Por Fase
 
@@ -81,47 +81,47 @@ Gerado em: 2026-05-04T20:53:32.994Z
 | 90 | group | metropole-perfect | H01 | Agrupamento liberado na Capital |
 | 91 | tribe | metropole-perfect | H01 | Ativou Domo da Tribo |
 | 110 | horde | metropole-perfect | H01 | Horda contida sem perda de aldeia |
-| 115 | march | metropole-perfect | H01 | Iniciou marcha ao Portal |
-| 118 | outcome | metropole-perfect | H01 | Entrou no Portal |
+| 114 | march | metropole-perfect | H01 | Iniciou marcha ao Portal |
+| 117 | outcome | metropole-perfect | H01 | Entrou no Portal |
 
 ## Runs
 
 | Run | Portal | Vivos | Elegiveis D90 | Pico 2500 | Mortes Horda | Mortes PvP |
 | --- | --- | --- | --- | --- | --- | --- |
-| metropole-perfect | 25 | 25 | 36 | 1 | 31 | 9 |
-| metropole-lazy | 12 | 12 | 31 | 0 | 46 | 9 |
-| posto-perfect | 14 | 14 | 22 | 1 | 37 | 6 |
-| posto-lazy | 10 | 10 | 24 | 0 | 46 | 4 |
-| bastiao-perfect | 22 | 22 | 27 | 2 | 34 | 2 |
-| bastiao-lazy | 14 | 14 | 13 | 0 | 39 | 2 |
-| celeiro-perfect | 23 | 23 | 34 | 4 | 32 | 8 |
-| celeiro-lazy | 9 | 9 | 26 | 0 | 48 | 8 |
+| metropole-perfect | 23 | 23 | 41 | 3 | 34 | 8 |
+| metropole-lazy | 11 | 11 | 31 | 0 | 46 | 9 |
+| posto-perfect | 13 | 13 | 20 | 1 | 37 | 8 |
+| posto-lazy | 11 | 11 | 24 | 0 | 46 | 7 |
+| bastiao-perfect | 21 | 21 | 27 | 2 | 34 | 2 |
+| bastiao-lazy | 13 | 13 | 13 | 0 | 39 | 2 |
+| celeiro-perfect | 23 | 23 | 34 | 2 | 31 | 5 |
+| celeiro-lazy | 11 | 11 | 26 | 0 | 47 | 8 |
 
 ## Top Jogadores
 
 | Run | ID | Tipo | Perfil | Branch | Infl. D120 | Aldeias | Portal |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | metropole-perfect | H01 | humano | metropole | urban | 2500 | 10 | sim |
-| posto-perfect | H01 | humano | posto | tactical | 2500 | 10 | sim |
+| metropole-perfect | B35 | ia | posto | tactical | 2500 | 10 | sim |
+| metropole-perfect | B45 | ia | metropole | urban | 2500 | 10 | sim |
+| posto-perfect | B31 | ia | bastiao | defensive | 2500 | 10 | sim |
 | bastiao-perfect | H01 | humano | bastiao | flow | 2500 | 10 | sim |
 | bastiao-perfect | B41 | ia | bastiao | defensive | 2500 | 10 | sim |
 | celeiro-perfect | H01 | humano | celeiro | flow | 2500 | 10 | sim |
 | celeiro-perfect | B23 | ia | celeiro | defensive | 2500 | 10 | sim |
-| celeiro-perfect | B24 | ia | metropole | urban | 2500 | 10 | nao |
-| celeiro-perfect | B43 | ia | celeiro | flow | 2500 | 10 | sim |
 
 ## Piores Quedas
 
 | Run | ID | Tipo | Perfil | Branch | Infl. D120 | Aldeias | Motivo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| posto-perfect | B19 | ia | metropole | urban | 483 | 1 | pvp_eliminated |
-| posto-lazy | B44 | ia | celeiro | urban | 505 | 1 | influencia_insuficiente |
-| posto-lazy | B21 | ia | celeiro | urban | 514 | 1 | intercepted |
-| posto-lazy | B22 | ia | celeiro | flow | 586 | 2 | influencia_insuficiente |
+| posto-lazy | B44 | ia | celeiro | urban | 508 | 1 | influencia_insuficiente |
+| posto-lazy | B21 | ia | celeiro | urban | 514 | 1 | influencia_insuficiente |
+| posto-lazy | B22 | ia | celeiro | flow | 586 | 2 | pvp_eliminated |
+| posto-perfect | B19 | ia | metropole | urban | 587 | 2 | pvp_eliminated |
 | celeiro-lazy | B31 | ia | celeiro | tactical | 609 | 1 | pvp_eliminated |
-| posto-lazy | H08 | humano | metropole | defensive | 622 | 2 | influencia_insuficiente |
+| posto-perfect | B38 | ia | posto | tactical | 644 | 1 | influencia_insuficiente |
 | bastiao-perfect | B34 | ia | posto | defensive | 644 | 1 | influencia_insuficiente |
-| posto-perfect | B38 | ia | posto | tactical | 655 | 1 | influencia_insuficiente |
+| posto-lazy | B38 | ia | posto | flow | 661 | 1 | influencia_insuficiente |
 
 ## Leitura De Balanceamento
 

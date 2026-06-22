@@ -13,7 +13,7 @@ import {
   Target,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { calculateVillageDevelopment, getThreatCalendar, type EvolutionMode } from "@/core/GameBalance";
@@ -21,7 +21,7 @@ import { PlayerAlertCards } from "@/components/player-alert-cards";
 import type { ImperialDecisionConsequenceType, ImperialDecisionInboxItem, ImperialState } from "@/lib/imperial-state";
 import type { VillageSummary } from "@/lib/mock-data";
 import { buildPlayerAlertDeck, type PlayerAlertCard, type PlayerAlertChoice } from "@/lib/player-alerts";
-import { emitUiFeedback } from "@/lib/ui-feedback";
+import { emitUiFeedback, emitUiToast } from "@/lib/ui-feedback";
 import {
   buildGuide,
   buildSandboxCoachCta,
@@ -32,14 +32,21 @@ import {
 
 type IntelSubtab = "decisions" | "intel";
 
-const EXPIRY_WINDOW_BY_SEVERITY: Record<PlayerAlertCard["severity"], number> = {
-  high: 2,
-  medium: 3,
-  low: 4,
-};
-
 function clampPenalty(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, Math.floor(value)));
+}
+
+function resolveDecisionWindow(
+  severity: PlayerAlertCard["severity"],
+  source: ImperialDecisionInboxItem["source"],
+): number {
+  if (source === "senate") {
+    return severity === "high" ? 4 : severity === "medium" ? 7 : 10;
+  }
+  if (source === "field") {
+    return severity === "high" ? 1 : severity === "medium" ? 2 : 3;
+  }
+  return severity === "high" ? 2 : severity === "medium" ? 4 : 6;
 }
 
 function resolveDecisionConsequence(
@@ -55,29 +62,65 @@ function resolveDecisionConsequence(
   const totalTroops = current.troops.militia + current.troops.shooters + current.troops.scouts + current.troops.machinery;
 
   if (source === "senate") {
-    const amount = clampPenalty(3 + 6 * severityFactor, 3, 9);
+    const amount = clampPenalty(7 + 14 * severityFactor, 7, 21);
     return {
       consequenceType: "satisfaction",
       consequenceAmount: amount,
-      consequenceLabel: `Se ignorar: -${amount} satisfacao por desgaste politico`,
+      consequenceLabel: `Se ignorar: -${amount} satisfacao por crise politica`,
     };
   }
 
   if (source === "field") {
-    const amount = clampPenalty(totalTroops * (0.025 + severityFactor * 0.045), 8, 55);
+    const amount = clampPenalty(totalTroops * (0.04 + severityFactor * 0.08), 14, 120);
     return {
       consequenceType: "troops",
       consequenceAmount: amount,
-      consequenceLabel: `Se ignorar: ate -${amount} milicia em atrito local`,
+      consequenceLabel: `Se ignorar: ate -${amount} milicia por atrito de campo`,
     };
   }
 
   const resourceBase = Math.max(1000, current.resources.supplies);
-  const amount = clampPenalty(resourceBase * (0.012 + severityFactor * 0.022), 45, 180);
+  const amount = clampPenalty(resourceBase * (0.018 + severityFactor * 0.038), 70, 280);
   return {
     consequenceType: "supplies",
     consequenceAmount: amount,
     consequenceLabel: `Se ignorar: -${amount} suprimentos por atraso operacional`,
+  };
+}
+
+function applyDecisionReward(current: ImperialState, decision: ImperialDecisionInboxItem): ImperialState {
+  if (decision.source === "senate") {
+    const gain = decision.severity === "high" ? 6 : decision.severity === "medium" ? 4 : 2;
+    return {
+      ...current,
+      senate: {
+        ...current.senate,
+        satisfaction: Math.min(100, current.senate.satisfaction + gain),
+      },
+      logs: [`Decisao politica resolvida: ${decision.title}. +${gain} satisfacao.`, ...current.logs].slice(0, 12),
+    };
+  }
+
+  if (decision.source === "field") {
+    const saved = Math.max(4, Math.floor(decision.consequenceAmount * 0.35));
+    return {
+      ...current,
+      troops: {
+        ...current.troops,
+        militia: current.troops.militia + saved,
+      },
+      logs: [`Decisao de campo resolvida: ${decision.title}. ${saved} milicia preservada.`, ...current.logs].slice(0, 12),
+    };
+  }
+
+  const savedSupplies = Math.max(25, Math.floor(decision.consequenceAmount * 0.25));
+  return {
+    ...current,
+    resources: {
+      ...current.resources,
+      supplies: current.resources.supplies + savedSupplies,
+    },
+    logs: [`Leitura operacional resolvida: ${decision.title}. +${savedSupplies} suprimentos preservados.`, ...current.logs].slice(0, 12),
   };
 }
 
@@ -218,7 +261,7 @@ export function WorldAssistant({
           severity: text.includes("hostil") ? "high" : text.includes("Cidade vazia") ? "medium" : "low",
           title: text.includes("hostil") ? "Contato hostil avistado" : text.includes("Cidade vazia") ? "Cidade vazia no corredor" : "Relatorio de marcha",
           situation: text,
-          reason: "Batedores registraram o contato durante a passagem pelo corredor de marcha.",
+          reason: "Exploradores registraram o contato durante a passagem pelo corredor de marcha.",
           impact: "Fica salvo como leitura tática. Não oferece ação direta nesta aba.",
           choices: [],
           sourceTags: ["intel", "map", "march"],
@@ -240,15 +283,48 @@ export function WorldAssistant({
   const decisionsSecondary = sortedDecisionCards.slice(1);
   const intelPrimary = intelLogCards[0] ?? infoCards[0] ?? alertDeck.primary;
   const intelSecondary = intelLogCards.length > 0 ? [...intelLogCards.slice(1), ...infoCards] : infoCards.slice(1);
+  const threat = getThreatCalendar(currentDay);
+  const strongestRisk = useMemo(
+    () => [...decisionCards, ...infoCards].filter((card) => card.severity === "high" || card.severity === "medium").slice(0, 2),
+    [decisionCards, infoCards],
+  );
+  const recentIntel = useMemo(
+    () => [...intelLogCards, ...infoCards].slice(0, 3),
+    [infoCards, intelLogCards],
+  );
+  const recommendedTabLabel =
+    guide.recommendedTab === "base"
+      ? "Abrir Cidades"
+      : guide.recommendedTab === "board"
+        ? "Abrir Mundo"
+        : guide.recommendedTab === "empire"
+          ? "Abrir Império"
+          : guide.recommendedTab === "guide"
+            ? "Abrir Perfil"
+            : "Abrir Comando";
+  const decisionSyncSignature = useMemo(
+    () =>
+      [
+        currentDay,
+        ...decisionCards.map((card) => [card.id, card.title, card.severity, card.sourceTags.join(",")].join(":")),
+      ].join("|"),
+    [currentDay, decisionCards],
+  );
+  const lastDecisionSyncRef = useRef("");
 
   useEffect(() => {
+    if (lastDecisionSyncRef.current === decisionSyncSignature) {
+      return;
+    }
+    lastDecisionSyncRef.current = decisionSyncSignature;
+
     const seedItems = decisionCards.map((card) => {
-      const expiresWindowDays = EXPIRY_WINDOW_BY_SEVERITY[card.severity];
       const source: ImperialDecisionInboxItem["source"] = card.sourceTags.some((tag) => /senado|senate/i.test(tag))
         ? "senate"
         : card.sourceTags.some((tag) => /map|combat|frontline|horde|quest|march|expansion/i.test(tag))
           ? "field"
           : "intel";
+      const expiresWindowDays = resolveDecisionWindow(card.severity, source);
       return {
         id: card.id,
         title: card.title,
@@ -378,18 +454,30 @@ export function WorldAssistant({
         decisionInbox: next.slice(0, 120),
       };
     });
-  }, [currentDay, decisionCards, setImperialState]);
+  }, [currentDay, decisionCards, decisionSyncSignature, setImperialState]);
   const handleAlertChoice = (choice: PlayerAlertChoice) => {
     const decisionId = choice.id.includes("-") ? choice.id.split("-").slice(0, -1).join("-") : "";
     if (decisionId) {
-      setImperialState((current) => ({
-        ...current,
-        decisionInbox: (current.decisionInbox ?? []).map((entry) =>
-          entry.id === decisionId && entry.status === "pending"
-            ? { ...entry, status: "resolved" }
-            : entry,
-        ),
-      }));
+      setImperialState((current) => {
+        const decision = (current.decisionInbox ?? []).find((entry) => entry.id === decisionId && entry.status === "pending");
+        if (!decision) {
+          return current;
+        }
+        const rewarded = applyDecisionReward(current, decision);
+        return {
+          ...rewarded,
+          decisionInbox: (rewarded.decisionInbox ?? []).map((entry) =>
+            entry.id === decisionId && entry.status === "pending"
+              ? { ...entry, status: "resolved" }
+              : entry,
+          ),
+        };
+      });
+      emitUiToast({
+        tone: "success",
+        title: "Decisão computada",
+        message: "Resposta registrada no conselho. Recompensa aplicada se a pauta ainda estava pendente.",
+      });
     }
     if (choice.tab) {
       jumpToTabWithQuery(choice.tab, choice.query ?? {});
@@ -449,13 +537,11 @@ export function WorldAssistant({
             <p className="mt-2 text-[10px] text-slate-400">Este guia desaparece após o Dia 3. Use o <strong className="text-slate-200">?</strong> no canto para ver dicas a qualquer momento.</p>
           </article>
         ) : null}
-        <article className="kw-glass rounded-2xl p-2.5">
+        <article className="kw-glass rounded-2xl border border-cyan-200/20 p-2.5">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                {isSandboxWorld ? "Briefing sandbox" : "Briefing da run"}
-              </p>
-              <p className="truncate text-sm font-bold text-slate-50">D{currentDay} | {guide.build.label} | {guide.windowLabel}</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-100">Hoje no Reino</p>
+              <p className="truncate text-sm font-black text-slate-50">Dia {currentDay}: {guide.windowLabel}</p>
               <p className="mt-1 text-[11px] leading-5 text-slate-300">{guide.focus}</p>
             </div>
             <button
@@ -468,6 +554,22 @@ export function WorldAssistant({
             >
               <BookOpen className="h-3.5 w-3.5" />
               Guia
+            </button>
+          </div>
+
+          <div className="mt-2 rounded-2xl border border-amber-300/28 bg-amber-500/12 p-2.5">
+            <div className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-amber-100" />
+              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-amber-100">Ordem recomendada</p>
+            </div>
+            <p className="mt-1 text-[12px] font-bold leading-5 text-slate-50">{guide.nextAction}</p>
+            <button
+              type="button"
+              onClick={() => jumpToTab(guide.recommendedTab)}
+              className="mt-2 inline-flex w-full items-center justify-center gap-1 rounded-xl border border-amber-200/50 bg-amber-300 px-3 py-2 text-[11px] font-black text-slate-950 shadow-[0_12px_28px_rgba(251,191,36,0.18)] active:scale-95"
+            >
+              <Compass className="h-3.5 w-3.5" />
+              {recommendedTabLabel}
             </button>
           </div>
 
@@ -488,14 +590,6 @@ export function WorldAssistant({
               <Crown className="mx-auto h-4 w-4 text-amber-200" />
               <p className="mt-1 font-black text-slate-50">{heroCount}</p>
             </div>
-          </div>
-
-          <div className="mt-2 rounded-2xl border border-cyan-300/20 bg-cyan-500/10 p-2">
-            <div className="flex items-center gap-2">
-              <Target className="h-4 w-4 text-cyan-100" />
-              <p className="text-[11px] font-bold text-slate-50">Agora</p>
-            </div>
-            <p className="mt-1 text-[11px] leading-5 text-slate-200">{guide.nextAction}</p>
           </div>
 
           {(() => {
@@ -521,6 +615,19 @@ export function WorldAssistant({
             return null;
           })()}
 
+          {strongestRisk.length > 0 ? (
+            <div className="mt-2 grid gap-1.5">
+              {strongestRisk.map((card) => (
+                <div key={card.id} className="rounded-2xl border border-white/12 bg-white/6 p-2">
+                  <p className="text-[9px] font-black uppercase tracking-[0.13em] text-slate-400">
+                    {card.severity === "high" ? "Risco alto" : "Atenção"}
+                  </p>
+                  <p className="mt-0.5 text-[11px] font-bold leading-4 text-slate-100">{card.title}</p>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
           <div className="mt-2 flex flex-wrap gap-1.5">
             <button
               type="button"
@@ -538,6 +645,12 @@ export function WorldAssistant({
               <MousePointerClick className="h-3.5 w-3.5" />
               {activeTab}
             </span>
+            {recentIntel.length > 0 ? (
+              <span className="inline-flex items-center gap-1 rounded-full border border-cyan-300/25 bg-cyan-500/12 px-2 py-1 text-[10px] font-semibold text-cyan-100">
+                <Sparkles className="h-3.5 w-3.5" />
+                {recentIntel.length} evento(s)
+              </span>
+            ) : null}
           </div>
 
           {sandboxCoachCta ? (
@@ -593,7 +706,7 @@ export function WorldAssistant({
               secondary={decisionsSecondary}
               onChoice={handleAlertChoice}
               title="Decisoes do Senado e Campo"
-              subtitle="Escolhas reais. Se ignoradas, geram custo pequeno e coerente."
+              subtitle="Escolhas reais. Senado pode maturar por dias; campo exige resposta curta. Ignorar cobra custo político ou militar."
               decisionInboxById={decisionInboxById}
               onIgnoreDecision={handleIgnoreDecision}
             />

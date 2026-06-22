@@ -19,6 +19,7 @@ import type {
 } from "@/lib/mock-data";
 import { getAuthenticatedUser } from "@/lib/supabase-server";
 import { inFilter, isSupabaseConfigured, looksLikeUuid, shouldUseLocalSupabaseFallback, supabaseInsertReturning, supabasePatchReturning, supabaseSelect } from "@/lib/supabase-rest";
+import { calculateCachedPowerScore, normalizeWorldPlayerCap } from "@/lib/world-rules";
 
 const WORLD_DURATION_DAYS = 120;
 const EXPRESS_WORLD_DURATION_DAYS = 30;
@@ -26,7 +27,7 @@ const IMPERIAL_CLIENT_STATE_VERSION = 16;
 const REAL_DAY_MS = 24 * 60 * 60 * 1000;
 const STRUCTURE_IDS = ["crown", "economy", "society", "recruitment", "defense"] as const;
 type SeasonMode = "classic" | "express";
-const WORLD_SELECT_BASE = "id,slug,name,status,phase,day_number,starts_at,runtime_started,runtime_real_time_enabled,runtime_anchor_day,runtime_anchor_started_at,sandbox_enabled";
+const WORLD_SELECT_BASE = "id,slug,name,status,phase,day_number,starts_at,runtime_started,runtime_real_time_enabled,runtime_anchor_day,runtime_anchor_started_at,sandbox_enabled,player_cap";
 const WORLD_SELECT_WITH_MODE = `${WORLD_SELECT_BASE},season_mode,speed_multiplier`;
 
 type CityStructureId = (typeof STRUCTURE_IDS)[number];
@@ -49,6 +50,7 @@ type DbWorld = {
   sandbox_enabled?: boolean;
   season_mode?: SeasonMode | null;
   speed_multiplier?: number | null;
+  player_cap?: number | null;
 };
 
 type DbWorldPlayer = {
@@ -128,6 +130,7 @@ type DbTribeCitadel = {
 };
 
 type DbImperialStateRow = {
+  world_player_id?: string;
   materials_stock: number;
   supplies_stock: number;
   militia_count?: number;
@@ -736,6 +739,14 @@ async function ensureImperialState(world: Pick<DbWorld, "id" | "slug">, worldPla
           version: IMPERIAL_CLIENT_STATE_VERSION,
         materials_stock: seed.materials,
         supplies_stock: seed.supplies,
+        materials_anchor_value: seed.materials,
+        materials_anchor_at: new Date().toISOString(),
+        materials_rate_per_sec: 0,
+        materials_capacity: Math.max(seed.materials, 50000),
+        supplies_anchor_value: seed.supplies,
+        supplies_anchor_at: new Date().toISOString(),
+        supplies_rate_per_sec: 0,
+        supplies_capacity: Math.max(seed.supplies, 50000),
         militia_count: seed.troops.militia,
         shooters_count: seed.troops.shooters,
         scouts_count: seed.troops.scouts,
@@ -899,6 +910,14 @@ async function ensurePlayerCapital(world: Pick<DbWorld, "id" | "slug">, worldPla
       version: IMPERIAL_CLIENT_STATE_VERSION,
       materials_stock: seed.materials,
       supplies_stock: seed.supplies,
+      materials_anchor_value: seed.materials,
+      materials_anchor_at: new Date().toISOString(),
+      materials_rate_per_sec: 0,
+      materials_capacity: Math.max(seed.materials, 50000),
+      supplies_anchor_value: seed.supplies,
+      supplies_anchor_at: new Date().toISOString(),
+      supplies_rate_per_sec: 0,
+      supplies_capacity: Math.max(seed.supplies, 50000),
       militia_count: seed.troops.militia,
       shooters_count: seed.troops.shooters,
       scouts_count: seed.troops.scouts,
@@ -1053,7 +1072,7 @@ async function fetchImperialDbState(worldDbId: string, worldPlayerId: string | n
   }
 
   const params = new URLSearchParams();
-  params.set("select", "materials_stock,supplies_stock,militia_count,shooters_count,scouts_count,machinery_count,sandbox_quests_completed,sandbox_wonders_built,sandbox_dome_active,sandbox_snapshots_json");
+  params.set("select", "world_player_id,materials_stock,supplies_stock,militia_count,shooters_count,scouts_count,machinery_count,sandbox_quests_completed,sandbox_wonders_built,sandbox_dome_active,sandbox_snapshots_json");
   params.set("world_id", `eq.${worldDbId}`);
   params.set("world_player_id", `eq.${worldPlayerId}`);
   const rows = await supabaseSelect<DbImperialStateRow>("world_player_imperial_states", params);
@@ -1344,28 +1363,46 @@ export const getWorldPayload = cache(async function getWorldPayload(worldRouteId
     worldPlayers.length > 0
       ? Math.round(worldPlayers.reduce((sum, entry) => sum + (entry.power_score_cached ?? 0), 0) / worldPlayers.length)
       : 0;
+  const imperialStateByPlayerId = new Map<string, DbImperialStateRow>();
+  if (imperialDbState?.world_player_id) {
+    imperialStateByPlayerId.set(imperialDbState.world_player_id, imperialDbState);
+  }
   const participants: WorldParticipant[] = [...worldPlayers]
-    .sort((a, b) => (b.power_score_cached ?? 0) - (a.power_score_cached ?? 0))
     .map((entry) => {
-      const participantTribe = entry.tribe_id ? tribeBundle.tribes.get(entry.tribe_id) : undefined;
+      const state = imperialStateByPlayerId.get(entry.id);
+      const livePower =
+        state && (entry.power_score_cached ?? 0) <= 0
+          ? calculateCachedPowerScore({
+              militia: state.militia_count,
+              shooters: state.shooters_count,
+              scouts: state.scouts_count,
+              machinery: state.machinery_count,
+            })
+          : entry.power_score_cached ?? 0;
+      return { entry, livePower };
+    })
+    .sort((a, b) => b.livePower - a.livePower)
+    .map((entry) => {
+      const player = entry.entry;
+      const participantTribe = player.tribe_id ? tribeBundle.tribes.get(player.tribe_id) : undefined;
       const relation: WorldParticipant["relation"] =
-        entry.id === currentWorldPlayer?.id
+        player.id === currentWorldPlayer?.id
           ? "self"
-          : entry.tribe_id && currentTribeId && entry.tribe_id === currentTribeId
+          : player.tribe_id && currentTribeId && player.tribe_id === currentTribeId
             ? "ally"
-            : entry.tribe_id
+            : player.tribe_id
               ? "wary"
               : "neutral";
-      const name = usernameMap.get(entry.user_id) ?? "Reino sem nome";
+      const name = usernameMap.get(player.user_id) ?? "Reino sem nome";
 
       return {
-        id: entry.id,
+        id: player.id,
         name,
-        influence: entry.power_score_cached ?? 0,
-        status: entry.status,
+        influence: entry.livePower,
+        status: player.status,
         relation,
         tribeName: participantTribe?.name ?? null,
-        kingName: kingNameMap.get(entry.id) ?? null,
+        kingName: kingNameMap.get(player.id) ?? null,
         isAi: name.startsWith("ia_") || name.startsWith("reino_ia_"),
       };
     });
@@ -1378,6 +1415,7 @@ export const getWorldPayload = cache(async function getWorldPayload(worldRouteId
     seasonMode: runtime.seasonMode,
     speedMultiplier: runtime.speedMultiplier,
     durationDays: runtime.durationDays,
+    playerCap: normalizeWorldPlayerCap(worldRecord.player_cap),
     averageInfluenceScore,
     activeAlerts: [
       runtime.runtimeState.realTimeEnabled

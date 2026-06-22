@@ -116,6 +116,7 @@ export type WorldState = {
   seasonMode?: "classic" | "express";
   speedMultiplier?: number;
   durationDays?: number;
+  playerCap?: number;
   averageInfluenceScore: number;
   activeAlerts: string[];
   activeVillageId: string;

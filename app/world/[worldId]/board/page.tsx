@@ -8,7 +8,7 @@ import { StrategicMap } from "@/components/board/StrategicMap";
 import { useLiveWorldContext } from "@/lib/world-runtime";
 
 export default function BoardPage({ params }: { params: { worldId: string } }) {
-  const { world, worldMeta } = useLiveWorldContext();
+  const { world, worldMeta, runtimeState } = useLiveWorldContext();
   const villageDevelopments = world.villages.map((village) => calculateVillageDevelopment(village.buildingLevels));
 
   const sovereignty = calculateSovereigntyScore({
@@ -33,6 +33,7 @@ export default function BoardPage({ params }: { params: { worldId: string } }) {
       currentDay={world.day}
       sovereigntyScore={sovereignty.total}
       readOnly={worldMeta.readOnly}
+      worldStarted={runtimeState.started}
     />
   );
 }

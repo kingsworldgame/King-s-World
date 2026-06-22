@@ -166,7 +166,7 @@ export function WorldProfileClient({
   );
   const participants = worldState.participants ?? [];
   const participantCount = participants.length;
-  const participantTarget = 50;
+  const participantTarget = worldState.playerCap ?? 25;
   const rankedParticipants = participants.slice(0, 10);
   const canFillAi = participantCount < participantTarget;
 
@@ -175,11 +175,12 @@ export function WorldProfileClient({
     setAiFillStatus(null);
     try {
       const response = await fetch(`/api/worlds/${worldId}/participants/ai-fill`, { method: "POST" });
-      const payload = (await response.json()) as { after?: number; created?: number; error?: string };
+      const payload = (await response.json()) as { after?: number; created?: number; target?: number; error?: string };
       if (!response.ok) {
         throw new Error(payload.error ?? "Nao foi possivel completar com IA.");
       }
-      const message = `IA adicionada: ${payload.created ?? 0}. Total: ${payload.after ?? participantTarget}/50.`;
+      const target = payload.target ?? participantTarget;
+      const message = `IA adicionada: ${payload.created ?? 0}. Total: ${payload.after ?? target}/${target}.`;
       setAiFillStatus(message);
       emitUiToast({ tone: "success", title: "Participantes completos", message });
       router.refresh();
@@ -342,7 +343,7 @@ export function WorldProfileClient({
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">Participantes</p>
-            <h2 className="mt-1 text-lg font-black text-slate-50">{participantCount}/50 no mundo</h2>
+            <h2 className="mt-1 text-lg font-black text-slate-50">{participantCount}/{participantTarget} no mundo</h2>
             <p className="mt-1 text-[11px] leading-4 text-slate-300">Ranking de influencia e leitura diplomatica.</p>
           </div>
           <button
@@ -352,7 +353,7 @@ export function WorldProfileClient({
             disabled={!canFillAi || fillingAi}
             className="rounded-2xl border border-amber-300/35 bg-amber-400/14 px-3 py-2 text-[10px] font-black text-amber-50 disabled:opacity-45"
           >
-            {fillingAi ? "Preenchendo..." : canFillAi ? "IA ate 50" : "Completo"}
+            {fillingAi ? "Preenchendo..." : canFillAi ? `IA ate ${participantTarget}` : "Completo"}
           </button>
         </div>
         <div className="mt-3 grid gap-1.5">

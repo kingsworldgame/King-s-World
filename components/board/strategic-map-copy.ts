@@ -6,7 +6,6 @@ export function describeTileAction(kind: TileActionKind): string {
   if (kind === "attack") return "Tentar tomar a cidade";
   if (kind === "annex") return "Tomar cidade vazia";
   if (kind === "explore") return "Revelar a area e descobrir riscos";
-  if (kind === "spy") return "Revelar alvo hostil";
   return "Apenas olhar";
 }
 
@@ -16,7 +15,6 @@ export function actionTone(kind: TileActionKind): string {
   if (kind === "build") return "border-emerald-300/45 bg-emerald-500/12 text-emerald-100";
   if (kind === "go") return "border-amber-300/45 bg-amber-500/12 text-amber-100";
   if (kind === "explore") return "border-sky-300/45 bg-sky-500/12 text-sky-100";
-  if (kind === "spy") return "border-violet-300/45 bg-violet-500/12 text-violet-100";
   return "border-white/20 bg-white/8 text-slate-100";
 }
 

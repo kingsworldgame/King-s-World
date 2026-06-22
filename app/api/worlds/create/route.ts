@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { requireAuthenticatedAppUser } from "@/lib/app-user";
 import { supabaseInsertReturning, supabaseRpc } from "@/lib/supabase-rest";
+import { DEFAULT_WORLD_PLAYER_CAP } from "@/lib/world-rules";
 
 type SeasonMode = "normal" | "express";
 
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
       starts_at: iso(1),
       phase_2_starts_at: iso(1 + Math.ceil(durationDays / 6)),
       ends_at: iso(1 + durationDays),
-      player_cap: 25,
+      player_cap: DEFAULT_WORLD_PLAYER_CAP,
       map_width: 81,
       map_height: 81,
       base_move_time_minutes: Math.max(1, Math.round(45 / speedMultiplier)),

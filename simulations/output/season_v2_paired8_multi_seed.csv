@@ -1,9 +1,9 @@
 seed,scenario,focusProfile,portalSurvivors,finalAlive,day90Eligible,reached2500,hordeDeaths,pvpDeaths,trailDeaths,avgVillagesLostToHorde,avgVillagesLostTotal,avgTroops,avgHeroes,avgEta,dominantBranch,avgSecondVillageDay,avgFirstVillage100Day
-90712026,metropole-perfect,metropole,25,25,41,3,34,8,5,1.62,2.56,800.04,4.74,93.96,urban,13.92,41.82
-90719945,metropole-lazy,metropole,11,11,31,0,46,9,8,2.32,3.4,769.46,3.36,92.7,urban,13.62,41.84
-90727864,posto-perfect,posto,12,12,22,1,37,5,6,2.48,3.5,861.7,3.9,104.37,tactical,16.04,45.12
-90735783,posto-lazy,posto,11,11,25,0,46,4,9,2.88,3.92,806.86,2.96,113.97,tactical,14.7,43.94
-90743702,bastiao-perfect,bastiao,22,22,27,2,34,2,4,1.62,2.4,973.66,4.44,103.75,defensive,16.94,46.62
-90751621,bastiao-lazy,bastiao,14,14,13,0,39,2,10,1.8,2.46,982.74,2.98,116.41,defensive,17,48.38
-90759540,celeiro-perfect,celeiro,23,23,34,4,31,8,8,1.72,2.54,810.1,5.04,69.56,flow,14.18,43.2
-90767459,celeiro-lazy,celeiro,11,11,26,0,47,8,10,2.52,3.64,787.78,3.1,84.21,flow,15.3,45.58
+90712026,metropole-perfect,metropole,23,23,41,3,34,8,9,1.62,2.56,800.04,4.74,93.96,urban,13.92,41.82
+90719945,metropole-lazy,metropole,11,11,31,0,46,9,9,2.32,3.4,769.46,3.36,92.7,urban,13.62,41.84
+90727864,posto-perfect,posto,13,13,20,1,37,8,7,2.36,3.18,861.9,3.8,94.66,tactical,16.04,45.12
+90735783,posto-lazy,posto,11,11,24,0,46,7,9,2.84,3.88,806.86,2.92,107.84,tactical,14.7,43.94
+90743702,bastiao-perfect,bastiao,21,21,27,2,34,2,6,1.62,2.4,973.66,4.44,103.75,defensive,16.94,46.62
+90751621,bastiao-lazy,bastiao,13,13,13,0,39,2,11,1.8,2.46,982.74,2.98,116.41,defensive,17,48.38
+90759540,celeiro-perfect,celeiro,23,23,34,2,31,5,7,1.7,2.34,810.1,5.02,77.57,flow,14.18,43.2
+90767459,celeiro-lazy,celeiro,11,11,26,0,47,8,10,2.5,3.62,787.6,3.1,84.22,flow,15.3,45.58

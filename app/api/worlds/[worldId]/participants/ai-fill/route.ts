@@ -3,18 +3,18 @@ import { NextResponse } from "next/server";
 import { requireAuthenticatedAppUser } from "@/lib/app-user";
 import { ensureWorldFilled } from "@/lib/npc-fill";
 import { looksLikeUuid, supabaseSelect } from "@/lib/supabase-rest";
+import { normalizeWorldPlayerCap } from "@/lib/world-rules";
 
 type WorldRow = {
   id: string;
   slug: string;
   status: "open" | "running" | "finalized";
+  player_cap?: number | null;
 };
-
-const TARGET_PARTICIPANTS = 50;
 
 async function fetchWorld(worldId: string): Promise<WorldRow | null> {
   const params = new URLSearchParams();
-  params.set("select", "id,slug,status");
+  params.set("select", "id,slug,status,player_cap");
   params.set(looksLikeUuid(worldId) ? "id" : "slug", `eq.${worldId}`);
   params.set("limit", "1");
   const rows = await supabaseSelect<WorldRow>("worlds", params);
@@ -36,11 +36,12 @@ export async function POST(
       return NextResponse.json({ error: "Mundo finalizado nao recebe IA." }, { status: 409 });
     }
 
-    const result = await ensureWorldFilled(world.id, world.slug, TARGET_PARTICIPANTS);
+    const targetParticipants = normalizeWorldPlayerCap(world.player_cap);
+    const result = await ensureWorldFilled(world.id, world.slug, targetParticipants);
 
     return NextResponse.json({
       ok: true,
-      target: TARGET_PARTICIPANTS,
+      target: targetParticipants,
       before: result.before,
       created: result.created,
       after: result.after,

@@ -27,7 +27,6 @@ import {
   calculateMarchTimeMinutes,
   calculateSovereigntyScore,
   calculateTribeProgressStage,
-  calculateSpyOperationCost,
   calculateVillageDevelopment,
   getVillageDefenseLevel,
   canEnterPortal,
@@ -50,7 +49,7 @@ import type {
   ImperialExplorationDiscovery,
   ImperialVillageClaim,
 } from "@/lib/imperial-state";
-import { emitUiFeedback } from "@/lib/ui-feedback";
+import { emitUiFeedback, emitUiToast } from "@/lib/ui-feedback";
 import { useLiveWorldContext } from "@/lib/world-runtime";
 import { getDefaultBuildingLevels, getZeroBuildingLevels } from "@/lib/buildings";
 import { processKingsWorldCombat, type CombatArmy, type CombatResult } from "@/lib/combat-engine";
@@ -157,8 +156,7 @@ function describeTileAction(kind: TileActionKind): string {
   if (kind === "go") return "Operação militar de marcha ou apoio";
   if (kind === "attack") return "Operação militar para tomar cidade";
   if (kind === "annex") return "Tomar cidade vazia";
-  if (kind === "explore") return "Explorar sem tropas e revelar riscos";
-  if (kind === "spy") return "Revelar alvo hostil";
+  if (kind === "explore") return "Explorar área e revelar riscos";
   return "Apenas olhar";
 }
 
@@ -202,7 +200,7 @@ function buildExplorationDiscovery(
       type,
       status: "new",
       title: "Oportunidade revelada",
-      summary: "Batedores encontraram sinais de riqueza e posição boa para expansão. A área merece atenção antes que outro reino chegue.",
+      summary: "A exploração encontrou sinais de riqueza e posição boa para expansão. A área merece atenção antes que outro reino chegue.",
       imageSrc: "/images/card-opportunity.jpg",
       riskLabel: "Risco médio",
       rewardLabel: "Bônus de fundação",
@@ -268,6 +266,57 @@ function buildExplorationDiscovery(
     rewardLabel: "Área conhecida",
     actionLabel: "Marcar terreno",
   };
+}
+
+function buildPassageDiscovery(
+  worldId: string,
+  tile: WorldHexTile,
+  routeSummary: { hexCount: number },
+  site: BoardSite | null,
+): ImperialExplorationDiscovery {
+  if (site?.relation === "Inimigo") {
+    return {
+      coordKey: tile.coordKey,
+      type: "threat",
+      status: "new",
+      title: "Aldeia inimiga avistada",
+      summary: `${site.name} apareceu no caminho da exploração. O local foi marcado sem iniciar combate; agora você sabe que existe presença hostil naquela passagem.`,
+      imageSrc: "/images/threat-raiders.jpg",
+      riskLabel: "Contato hostil",
+      rewardLabel: "Intel militar",
+      actionLabel: "Avaliar ataque",
+    };
+  }
+
+  if (site?.occupationKind === "abandoned_city") {
+    return {
+      coordKey: tile.coordKey,
+      type: "ruins",
+      status: "new",
+      title: "Cidade vazia encontrada",
+      summary: `${site.name} está sem dono ativo. Não é conquista automática: a Coroa ainda precisa decidir se manda diplomata, tropas ou deixa a ruína esfriar.`,
+      imageSrc: "/images/threat-empty-ruins.jpg",
+      riskLabel: "Baixo controle",
+      rewardLabel: "Anexação possível",
+      actionLabel: "Marcar cidade vazia",
+    };
+  }
+
+  if (site) {
+    return {
+      coordKey: tile.coordKey,
+      type: "opportunity",
+      status: "new",
+      title: "Contato local registrado",
+      summary: `${site.name} foi registrada durante a passagem. A rota agora tem referência política e pode afetar decisões de fronteira.`,
+      imageSrc: "/images/card-opportunity.jpg",
+      riskLabel: "Contato diplomático",
+      rewardLabel: "Leitura local",
+      actionLabel: "Marcar contato",
+    };
+  }
+
+  return buildExplorationDiscovery(worldId, tile, routeSummary);
 }
 
 function discoveryTypeLabel(type: ExplorationDiscoveryType): string {
@@ -355,7 +404,7 @@ function formatTroopCommitment(selection: TroopSelection): string {
   const parts: string[] = [];
   if (selection.militia > 0) parts.push(`${selection.militia} milicia`);
   if (selection.shooters > 0) parts.push(`${selection.shooters} atiradores`);
-  if (selection.scouts > 0) parts.push(`${selection.scouts} batedores`);
+  if (selection.scouts > 0) parts.push(`${selection.scouts} exploradores`);
   if (selection.machinery > 0) parts.push(`${selection.machinery} maquinas`);
   return parts.length > 0 ? parts.join(", ") : "nenhuma";
 }
@@ -364,8 +413,6 @@ function sameTroopSelection(a: TroopSelection, b: TroopSelection): boolean {
   return a.militia === b.militia && a.shooters === b.shooters && a.scouts === b.scouts && a.machinery === b.machinery;
 }
 
-
-const HAS_SPY_HERO = true;
 
 function edgeKeyByCoord(a: AxialCoord, b: AxialCoord): string {
   const ak = axialKey(a);
@@ -380,15 +427,15 @@ function formatMinutesLabel(totalMinutes: number): string {
   return hh > 0 ? `${hh}h ${String(mm).padStart(2, "0")}m` : `${mm}m`;
 }
 
-function mapActionToMovementType(action: Exclude<TileActionKind, "inspect" | "explore">): StoredMapMovement["movementType"] {
+function mapActionToMovementType(action: TileActionKind): StoredMapMovement["movementType"] {
+  if (action === "explore") {
+    return "scout";
+  }
   if (action === "attack") {
     return "attack";
   }
   if (action === "annex") {
     return "annex";
-  }
-  if (action === "spy") {
-    return "spy";
   }
   if (action === "build") {
     return "transport";
@@ -454,10 +501,11 @@ function normalizeMovementCoordKey(coordKey: string): string {
 }
 
 function movementActionLabel(movement: StoredMapMovement): string {
+  if (movement.commandAction === "explore") return "Exploração";
   if (movement.commandAction === "attack") return "Ataque";
   if (movement.commandAction === "annex") return "Anexacao";
   if (movement.commandAction === "build") return movement.meta.buildMode === "road" ? "Estrada" : "Fundacao";
-  if (movement.commandAction === "spy") return "Espionagem";
+  if (movement.commandAction === "spy") return "Reconhecimento";
   if (normalizeMovementCoordKey(movement.targetCoord) === axialKey(ZERO_AXIAL)) return "Portal";
   return "Marcha";
 }
@@ -503,7 +551,7 @@ async function registerMapMovement(
     worldId,
     sourceCoord: axialKey(draft.from),
     targetCoord: axialKey(draft.to),
-    movementType: mapActionToMovementType(draft.action as Exclude<TileActionKind, "inspect" | "explore">),
+    movementType: mapActionToMovementType(draft.action),
     commandAction: draft.action as StoredMapMovement["commandAction"],
     launchedAt,
     arrivalAt,
@@ -518,7 +566,7 @@ async function registerMapMovement(
   return stored;
 }
 
-export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: initialDay, sovereigntyScore: initialSovereigntyScore, readOnly = false }: StrategicMapProps) {
+export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: initialDay, sovereigntyScore: initialSovereigntyScore, readOnly = false, worldStarted = true }: StrategicMapProps) {
   const { world: liveWorld } = useLiveWorldContext();
   const currentDay = liveWorld.day ?? initialDay;
   const { imperialState, setImperialState } = useImperialStateContext();
@@ -626,6 +674,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
   const suppressViewportTapRef = useRef(false);
   const interactionGateRef = useRef<{ coordKey: string; at: number; zoomLevel: ZoomLevel } | null>(null);
   const zoomNavigationLockUntilRef = useRef(0);
+  const initialViewAppliedRef = useRef(false);
 
   const [zoom, setZoom] = useState(DEFAULT_WORLD_ZOOM);
   const [zoomLevel, setZoomLevel] = useState<ZoomLevel>(4);
@@ -636,7 +685,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
   const [detailOpen, setDetailOpen] = useState(false);
   const [inspectedCoordKey, setInspectedCoordKey] = useState<string | null>(null);
   const [relationFilter, setRelationFilter] = useState<RelationFilter>("all");
-  const [activeAction, setActiveAction] = useState<TileActionKind>("inspect");
+  const [activeAction, setActiveAction] = useState<TileActionKind>("explore");
   const [actionStep, setActionStep] = useState<ActionStep>("choose");
   const [buildMode, setBuildMode] = useState<BuildMode>("outpost");
   const [movementDraft, setMovementDraft] = useState<MovementDraft | null>(null);
@@ -698,6 +747,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
         let latestMessage: string | null = null;
         const revealedRouteKeys: string[] = [];
         const intelReports: string[] = [];
+        const explorationDiscoveries: ImperialExplorationDiscovery[] = [];
 
         const next: StoredMapMovement[] = storedMovements.map((movement): StoredMapMovement => {
           if (movement.status !== "traveling") {
@@ -715,6 +765,31 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
             changed = true;
             revealedRouteKeys.push(...visibleCorridor);
             intelReports.push(...newIntel.map((report) => report.text));
+          }
+
+          if (movement.commandAction === "explore") {
+            for (const coordKey of routeSoFar.map(normalizeMovementCoordKey)) {
+              if (
+                normalizeMovementCoordKey(movement.sourceCoord) === coordKey ||
+                imperialState.discoveriesByCoord?.[coordKey] ||
+                explorationDiscoveries.some((discovery) => discovery.coordKey === coordKey)
+              ) {
+                continue;
+              }
+
+              const site = findBoardSiteByCoord(sites, coordKey);
+              const shouldCreateDiscovery = Boolean(site) || coordKey === normalizeMovementCoordKey(movement.targetCoord) || explorationSeed(worldId, `${coordKey}:passage`) % 100 < 38;
+              if (!shouldCreateDiscovery) {
+                continue;
+              }
+
+              const tile = world.tiles.find((entry) => entry.coordKey === coordKey);
+              if (!tile) {
+                continue;
+              }
+
+              explorationDiscoveries.push(buildPassageDiscovery(worldId, tile, { hexCount: movement.route.length }, site));
+            }
           }
 
           const arrivalTs = Date.parse(movement.arrivalAt);
@@ -748,6 +823,25 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
             }
 
             latestMessage = `Expedicao ${movement.id.slice(0, 8)} entrou no Portal com sucesso.`;
+            return {
+              ...movement,
+              status: "arrived",
+              meta: {
+                ...movement.meta,
+                reportedIntelCoordKeys: Array.from(new Set([
+                  ...(movement.meta.reportedIntelCoordKeys ?? []),
+                  ...newIntel.map((report) => report.coordKey),
+                ])).slice(0, 160),
+              },
+            };
+          }
+
+          if (movement.commandAction === "explore") {
+            const targetTile = world.tiles.find((entry) => entry.coordKey === normalizeMovementCoordKey(movement.targetCoord));
+            latestMessage = targetTile
+              ? `Exploração concluída em ${targetTile.q}:${targetTile.r}. A rota foi registrada.`
+              : `Exploração ${movement.id.slice(0, 8)} concluída.`;
+
             return {
               ...movement,
               status: "arrived",
@@ -1056,12 +1150,32 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
           ...current,
           mapMovements: next,
           exploredCoordKeys: Array.from(new Set([...(current.exploredCoordKeys ?? []), ...revealedRouteKeys])).slice(0, 800),
+          discoveriesByCoord:
+            explorationDiscoveries.length > 0
+              ? {
+                  ...(current.discoveriesByCoord ?? {}),
+                  ...Object.fromEntries(explorationDiscoveries.map((discovery) => [discovery.coordKey, discovery] as const)),
+                }
+              : current.discoveriesByCoord,
           logs: intelReports.length > 0
-            ? [...intelReports.map((report) => `Intel de marcha: ${report}`), ...current.logs].slice(0, 12)
+            ? [
+                ...explorationDiscoveries.map((discovery) => `Acontecimento de mapa: ${discovery.title} em ${discovery.coordKey}.`),
+                ...intelReports.map((report) => `Intel de marcha: ${report}`),
+                ...current.logs,
+              ].slice(0, 12)
+            : explorationDiscoveries.length > 0
+              ? [...explorationDiscoveries.map((discovery) => `Acontecimento de mapa: ${discovery.title} em ${discovery.coordKey}.`), ...current.logs].slice(0, 12)
             : current.logs,
         }));
         if (intelReports[0] || latestMessage) {
-          setMovementMessage(intelReports[0] ? `Relatório de batedores: ${intelReports[0]}` : latestMessage);
+          setMovementMessage(intelReports[0] ? `Relatório de exploração: ${intelReports[0]}` : latestMessage);
+        }
+        if (explorationDiscoveries[0]) {
+          emitUiToast({
+            tone: explorationDiscoveries[0].type === "threat" || explorationDiscoveries[0].type === "dragon" ? "error" : "info",
+            title: "Acontecimento no mapa",
+            message: `${explorationDiscoveries[0].title}: ${explorationDiscoveries[0].summary}`,
+          });
         }
       } catch {
         // silencioso
@@ -1077,6 +1191,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     imperialState.defenseProtocolByVillage,
     imperialState.defenseRecruitsByVillage,
     imperialState.deployedByVillage,
+    imperialState.discoveriesByCoord,
     imperialState.extraVillages,
     imperialState.heroBuildByVillage,
     imperialState.heroByVillage,
@@ -1086,6 +1201,8 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     storedMovements,
     unlockedTechs,
     liveWorld.sovereignty.militaryRankingPoints,
+    world.tiles,
+    worldId,
   ]);
   const mappedSites = useMemo(() => {
     const base = sites.map<MapSite>((site, idx) => {
@@ -1218,6 +1335,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
 
         return {
           id: movement.id,
+          commandAction: movement.commandAction,
           label: movementActionLabel(movement),
           targetLabel: movement.meta.targetLabel ?? movement.targetCoord.replace(",", ":"),
           routeKeys,
@@ -1253,6 +1371,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
 
   const troopCommittedTotal = troopSelectionTotal(troopCommitted);
   const primaryActiveRoute = activeMovementRoutes[0] ?? null;
+  const primaryExplorationRoute = primaryActiveRoute?.commandAction === "explore" ? primaryActiveRoute : null;
 
   useEffect(() => {
     setTroopDispatch((current) => {
@@ -1337,10 +1456,22 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
   const focusCoordKey = zoomLevel === 4 ? (selectedCoordKey ?? inspectedCoordKey) : (inspectedCoordKey ?? null);
   const selectedVisualCoordKey = zoomLevel === 4 ? selectedCoordKey : null;
   const selectedTile = focusCoordKey ? (tileByCoordKey.get(focusCoordKey) ?? null) : null;
-  const selectedSite = focusCoordKey ? (siteByCoordKey.get(focusCoordKey) ?? null) : null;
+  const rawSelectedSite = focusCoordKey ? (siteByCoordKey.get(focusCoordKey) ?? null) : null;
+  const rawSelectedHotspot = focusCoordKey ? (hotspotByCoordKey.get(focusCoordKey) ?? null) : null;
+  const rawSelectedDiscovery = focusCoordKey ? (imperialState.discoveriesByCoord?.[focusCoordKey] ?? null) : null;
+  const selectedCoordKnown = Boolean(
+    selectedTile?.isCentralThrone ||
+      rawSelectedSite?.faction === "self" ||
+      rawSelectedSite?.faction === "tribe" ||
+      rawSelectedSite?.faction === "ally" ||
+      (focusCoordKey && activeMovementRevealedKeys.has(focusCoordKey)) ||
+      (focusCoordKey && (imperialState.exploredCoordKeys ?? []).includes(focusCoordKey)) ||
+      rawSelectedDiscovery,
+  );
+  const selectedSite = selectedCoordKnown ? rawSelectedSite : null;
   const selectedFriendlySite = Boolean(selectedSite && (selectedSite.faction === "self" || selectedSite.faction === "tribe" || selectedSite.faction === "ally"));
-  const selectedHotspot = focusCoordKey ? (hotspotByCoordKey.get(focusCoordKey) ?? null) : null;
-  const selectedDiscovery = focusCoordKey ? (imperialState.discoveriesByCoord?.[focusCoordKey] ?? null) : null;
+  const selectedHotspot = selectedCoordKnown ? rawSelectedHotspot : null;
+  const selectedDiscovery = selectedCoordKnown ? rawSelectedDiscovery : null;
   const selectedDiscoveryAccent = selectedDiscovery ? discoveryAccent(selectedDiscovery.type) : null;
   const selectedDetailImage = selectedDiscovery?.imageSrc ?? (selectedTile ? cityDetailImageSrc(selectedSite, selectedHotspot, portalEligible) : "/images/cidade.jpg");
 
@@ -1480,8 +1611,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
 
     for (const movement of storedMovements) {
       keys.add(normalizeMovementCoordKey(movement.sourceCoord));
-      keys.add(normalizeMovementCoordKey(movement.targetCoord));
-      for (const coordKey of movement.route) {
+      for (const coordKey of movementPassedRouteKeys(movement, routeClock)) {
         keys.add(normalizeMovementCoordKey(coordKey));
       }
     }
@@ -1491,7 +1621,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     }
 
     return keys;
-  }, [imperialState.exploredCoordKeys, mappedSites, roadNetwork.nodes, storedMovements]);
+  }, [imperialState.exploredCoordKeys, mappedSites, roadNetwork.nodes, routeClock, storedMovements]);
 
   const currentVisionCoordKeys = useMemo(() => {
     const keys = new Set<string>(visitedCoordKeys);
@@ -1501,7 +1631,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     if (marchOrigin) {
       anchors.push(marchOrigin);
     }
-    if (focusCoordKey) {
+    if (focusCoordKey && visitedCoordKeys.has(focusCoordKey)) {
       const selected = tileByCoordKey.get(focusCoordKey);
       if (selected) {
         anchors.push({ q: selected.q, r: selected.r });
@@ -1512,12 +1642,13 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
       if (movement.status !== "traveling") {
         continue;
       }
-      const target = tileByCoordKey.get(normalizeMovementCoordKey(movement.targetCoord));
-      if (target) {
-        anchors.push({ q: target.q, r: target.r });
-      }
-      for (const coordKey of movement.route) {
-        keys.add(normalizeMovementCoordKey(coordKey));
+      for (const coordKey of movementPassedRouteKeys(movement, routeClock)) {
+        const normalized = normalizeMovementCoordKey(coordKey);
+        keys.add(normalized);
+        const passed = tileByCoordKey.get(normalized);
+        if (passed) {
+          anchors.push({ q: passed.q, r: passed.r });
+        }
       }
     }
 
@@ -1528,7 +1659,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     }
 
     return keys;
-  }, [focusCoordKey, marchOrigin, navigatorActive, storedMovements, tileByCoordKey, visitedCoordKeys, world.tiles]);
+  }, [focusCoordKey, marchOrigin, navigatorActive, routeClock, storedMovements, tileByCoordKey, visitedCoordKeys, world.tiles]);
 
   const strategicNodes = useMemo<StrategicNode[]>(() => {
     const candidates = new Set<string>();
@@ -1770,15 +1901,6 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     });
   }, [buildMode, ownVillageCount, routeSummary.hexCount, selectedHotspot?.coordKey, selectedHotspot?.terrainBonus.terrainCostMultiplier, selectedHotspot?.terrainBonus.terrainTimeMultiplier, selectedSite?.faction, selectedSite?.occupationKind]);
 
-  const spyCost = useMemo(() => {
-    return calculateSpyOperationCost({
-      hexDistance: Math.max(1, routeSummary.hexCount),
-      spyMasteryLevel: 3,
-      terrainCostMultiplier: selectedHotspot?.terrainBonus.terrainCostMultiplier,
-      terrainTimeMultiplier: selectedHotspot?.terrainBonus.terrainTimeMultiplier,
-    });
-  }, [routeSummary.hexCount, selectedHotspot?.coordKey, selectedHotspot?.terrainBonus.terrainCostMultiplier, selectedHotspot?.terrainBonus.terrainTimeMultiplier]);
-
   const exploreCost = useMemo(() => {
     const zoneTax = selectedTile?.zone === "core" ? 12 : selectedTile?.zone === "mid" ? 26 : 44;
     const terrainTax =
@@ -1810,18 +1932,19 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
       return [];
     }
 
-    if (readOnly) {
+    if (readOnly || !worldStarted) {
+      const reason = readOnly
+        ? "Temporada encerrada: mapa apenas em leitura."
+        : "O mundo ainda não começou. Aguarde o GM dar play ou o horário agendado.";
       return [
-        { kind: "inspect", label: "Inspecionar", enabled: true },
-        { kind: "explore", label: "Explorar (sem tropas)", enabled: false, reason: "Temporada encerrada: mapa apenas em leitura." },
-        { kind: "build", label: "Construir", enabled: false, reason: "Temporada encerrada: mapa apenas em leitura." },
-        { kind: "go", label: "Operação militar", enabled: false, reason: "Temporada encerrada: mapa apenas em leitura." },
-        { kind: "attack", label: "Operação militar", enabled: false, reason: "Temporada encerrada: mapa apenas em leitura." },
-        { kind: "annex", label: "Anexar", enabled: false, reason: "Temporada encerrada: mapa apenas em leitura." },
-        { kind: "spy", label: "Espiar", enabled: false, reason: "Temporada encerrada: mapa apenas em leitura." },
+        { kind: "explore", label: "Explorar área", enabled: false, reason },
+        { kind: "build", label: "Construir", enabled: false, reason },
+        { kind: "attack", label: "Operação militar", enabled: false, reason },
+        { kind: "annex", label: "Anexar", enabled: false, reason },
       ];
     }
 
+    const knownForOrders = selectedCoordKnown;
     const tileHasOwner = Boolean(selectedSite);
     const isAbandonedTile = selectedSite?.occupationKind === "abandoned_city";
     const isFrontierRuins = selectedSite?.occupationKind === "frontier_ruins";
@@ -1833,10 +1956,12 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     const centralBlocked = targetingPortal && !isPhase4;
     const alreadyExplored = visitedCoordKeys.has(selectedTile.coordKey) || Boolean(selectedDiscovery);
 
-    let buildEnabled = isFoundationTile && !targetingPortal;
+    let buildEnabled = knownForOrders && isFoundationTile && !targetingPortal;
     let buildReason: string | undefined;
     if (!buildEnabled) {
-      buildReason = targetingPortal
+      buildReason = !knownForOrders
+        ? "Explore a área antes de construir."
+        : targetingPortal
         ? "Portal Central não aceita construção."
         : "Somente vazio duro, hotspot livre ou ruína instável aceita fundação.";
     } else if (!isRoadConnected) {
@@ -1872,10 +1997,12 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
 
     // Atacar serve p/ cidade COM dono (combate/conquista) E p/ abandonada
     // (claim por combate: vence a guarnição + ocupa, herdando a infra).
-    let attackEnabled = Boolean(marchOriginKey) && (isEnemyTile || isAbandonedTile) && !targetingPortal;
+    let attackEnabled = knownForOrders && Boolean(marchOriginKey) && (isEnemyTile || isAbandonedTile) && !targetingPortal;
     let attackReason: string | undefined;
     if (!attackEnabled) {
-      attackReason = targetingPortal
+      attackReason = !knownForOrders
+        ? "Explore a área antes de atacar."
+        : targetingPortal
         ? "Portal Central não aceita ataque."
         : "Atacar/ocupar só aparece em cidade com dono ou abandonada.";
     } else if (selectedTile.coordKey === marchOriginKey) {
@@ -1883,10 +2010,12 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
       attackReason = "Tile de origem ja selecionado.";
     }
 
-    let annexEnabled = Boolean(marchOriginKey) && isAbandonedTile && !targetingPortal;
+    let annexEnabled = knownForOrders && Boolean(marchOriginKey) && isAbandonedTile && !targetingPortal;
     let annexReason: string | undefined;
     if (!annexEnabled) {
-      annexReason = targetingPortal
+      annexReason = !knownForOrders
+        ? "Explore a área antes de anexar."
+        : targetingPortal
         ? "Portal Central não aceita anexação."
         : "Anexar só aparece quando a cidade está vazia.";
     } else if (selectedTile.coordKey === marchOriginKey) {
@@ -1897,35 +2026,19 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
       annexReason = "Nenhum diplomata livre. Mature uma Colonia e contrate um agente na aba Herois.";
     }
 
-    let spyEnabled = Boolean(isEnemyTile) && !targetingPortal && HAS_SPY_HERO;
-    let spyReason: string | undefined;
-
-    if (!spyEnabled) {
-      if (targetingPortal) {
-        spyReason = "Portal Central não aceita espionagem.";
-      } else if (!isEnemyTile) {
-        spyReason = "Espiar so em tile inimigo.";
-      } else {
-        spyReason = "Necessita Heroi Espiao ativo.";
-      }
-    }
-
-    let exploreEnabled = !targetingPortal && !tileHasOwner && !selectedHotspot && !alreadyExplored;
+    let exploreEnabled = !knownForOrders && !targetingPortal && !alreadyExplored;
     let exploreReason: string | undefined;
     if (!exploreEnabled) {
       exploreReason = targetingPortal
         ? "O centro não pode ser explorado."
-        : tileHasOwner || selectedHotspot
-          ? "Esse ponto ja revela uma entidade fixa do mapa."
-          : "A area ja esta conhecida.";
+        : "A area ja esta conhecida.";
     } else if (imperialState.resources.supplies < exploreCost) {
       exploreEnabled = false;
       exploreReason = "Suprimentos insuficientes para a expedição.";
     }
 
     return [
-      { kind: "inspect", label: "Inspecionar", enabled: true },
-      { kind: "explore", label: "Explorar (sem tropas)", enabled: exploreEnabled, reason: exploreReason },
+      { kind: "explore", label: "Explorar área", enabled: exploreEnabled, reason: exploreReason },
       { kind: "build", label: "Construir", enabled: buildEnabled, reason: buildReason },
       ...(targetingPortal || selectedFriendlySite ? [{ kind: "go", label: "Operação militar", enabled: goEnabled, reason: goReason ?? goLabel }] : []),
       ...(!targetingPortal && (isEnemyTile || isAbandonedTile)
@@ -1934,11 +2047,10 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
       ...(!targetingPortal && isAbandonedTile
         ? [{ kind: "annex", label: "Anexar (diplomata)", enabled: annexEnabled, reason: annexReason }]
         : []),
-      { kind: "spy", label: "Espiar", enabled: spyEnabled, reason: spyReason },
     ] as TileActionOption[];
-  }, [colonyDiplomacy.free, exploreCost, imperialState.resources.supplies, isPhase4, isRoadConnected, marchOriginKey, mobilizationActive, portalEligible, readOnly, selectedDiscovery, selectedFriendlySite, selectedHotspot, selectedSite, selectedTile, visitedCoordKeys]);
+  }, [colonyDiplomacy.free, exploreCost, imperialState.resources.supplies, isPhase4, isRoadConnected, marchOriginKey, mobilizationActive, portalEligible, readOnly, selectedCoordKnown, selectedDiscovery, selectedFriendlySite, selectedHotspot, selectedSite, selectedTile, visitedCoordKeys, worldStarted]);
 
-  const selectedActionLabel = actionOptions.find((entry) => entry.kind === activeAction)?.label ?? "Inspecionar";
+  const selectedActionLabel = actionOptions.find((entry) => entry.kind === activeAction)?.label ?? "Ordem";
   const militaryActionOption = useMemo(() => {
     const attack = actionOptions.find((entry) => entry.kind === "attack");
     if (attack) return attack;
@@ -2036,6 +2148,10 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     if (viewportSize.w === 0 || viewportSize.h === 0) {
       return;
     }
+    if (initialViewAppliedRef.current) {
+      return;
+    }
+    initialViewAppliedRef.current = true;
 
     if (ownCapitalSite) {
       setZoomLevel(4);
@@ -2057,7 +2173,14 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
   }, [viewportSize.w, viewportSize.h, world, ownCapitalSite]);
 
   useEffect(() => {
-    setActiveAction("inspect");
+    setActiveAction("explore");
+    setActionStep("choose");
+    setMovementDraft(null);
+    setMovementMessage(null);
+  }, [worldId]);
+
+  useEffect(() => {
+    setActiveAction("explore");
     setActionStep("choose");
     setMovementDraft(null);
     setMovementMessage(null);
@@ -2191,7 +2314,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
       setDetailOpen(false);
       setMovementDraft(null);
       setMovementMessage(null);
-      zoomIntoCoord(coordKey);
+      setOffset(centerOnPoint(tile.center, zoom));
       return;
     }
 
@@ -2358,16 +2481,27 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
 
   const handleActionClick = (option: TileActionOption) => {
     emitUiFeedback(option.enabled ? "open" : "tap", option.enabled ? "medium" : "light");
-    if (readOnly && option.kind !== "inspect") {
-      setActiveAction("inspect");
+    if (!option.enabled) {
+      const message = option.reason ?? "Esta ação ainda não está disponível neste ponto.";
+      setMovementMessage(message);
+      emitUiToast({
+        tone: "info",
+        title: "Ordem bloqueada",
+        message,
+      });
+    }
+    if (readOnly) {
+      setActiveAction("explore");
       setActionStep("choose");
       setMovementDraft(null);
       return;
     }
     setActiveAction(option.kind);
-    setMovementMessage(null);
+    if (option.enabled) {
+      setMovementMessage(null);
+    }
 
-    if (!option.enabled || option.kind === "inspect" || !selectedTile) {
+    if (!option.enabled || !selectedTile) {
       setActionStep("choose");
       setMovementDraft(null);
       return;
@@ -2385,7 +2519,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
       return;
     }
 
-    const action = option.kind as Exclude<TileActionKind, "inspect">;
+    const action = option.kind;
 
     if (action === "attack") {
       setTroopPreset("custom");
@@ -2423,7 +2557,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     setActionStep("configure");
   };
 
-  const handleConfirmExploration = () => {
+  const handleConfirmExploration = async () => {
     if (readOnly) {
       return;
     }
@@ -2433,31 +2567,103 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
 
     setSubmittingExploration(true);
     emitUiFeedback("open", "medium");
-    const discovery = buildExplorationDiscovery(worldId, selectedTile, routeSummary);
-    const routeRevealKeys = revealCorridorKeys(routeToSelection.map((coord) => axialKey(coord)));
+
+    try {
+      const stored = await registerMapMovement(
+        worldId,
+        {
+          action: "explore",
+          from: { q: marchOrigin?.q ?? 0, r: marchOrigin?.r ?? 0 },
+          to: { q: selectedTile.q, r: selectedTile.r },
+          etaMinutes: Math.max(1, routeSummary.totalMinutes),
+          route: routeToSelection,
+          routeSteps: routeSummary.routeSteps,
+        },
+        {
+          buildMode: null,
+          district: selectedTile.district,
+          targetLabel: `Explorar ${selectedTile.q}:${selectedTile.r}`,
+          troopsSent: { militia: 0, shooters: 0, scouts: troopPool.scouts > 0 ? 1 : 0, machinery: 0 },
+          troopsTotal: troopPool.scouts > 0 ? 1 : 0,
+          troopPreset: "light",
+        },
+      );
+      const launchRevealKeys = revealCorridorKeys([stored.sourceCoord]);
+
+      setImperialState((current) => ({
+        ...current,
+        resources: {
+          ...current.resources,
+          supplies: Math.max(0, current.resources.supplies - exploreCost),
+        },
+        exploredCoordKeys: Array.from(new Set([...(current.exploredCoordKeys ?? []), ...launchRevealKeys])).slice(0, 800),
+        mapMovements: [stored, ...current.mapMovements].slice(0, 1200),
+        logs: [`Exploração enviada para ${selectedTile.q}:${selectedTile.r}. Equipe em rota.`, ...current.logs].slice(0, 12),
+      }));
+
+      const explorationMessage = `Exploração enviada. ETA ${formatMinutesLabel(stored.etaMinutes)}. Gasto: ${exploreCost.toLocaleString("pt-BR")} suprimentos. Equipe ocupada: ${stored.meta.troopsTotal ?? 0}.`;
+
+      setActionStep("choose");
+      setActiveAction("explore");
+      setMovementDraft(null);
+      setMovementMessage(explorationMessage);
+      emitUiToast({
+        tone: "success",
+        title: "Exploração computada",
+        message: explorationMessage,
+      });
+    } catch {
+      const message = "Falha ao lançar exploração. Tente novamente.";
+      setMovementMessage(message);
+      emitUiToast({ tone: "error", title: "Exploração falhou", message });
+    } finally {
+      setSubmittingExploration(false);
+    }
+  };
+
+  const handleReturnExploration = () => {
+    if (!primaryExplorationRoute) {
+      return;
+    }
+
+    const now = new Date();
+    const returnRoute = [...primaryExplorationRoute.passedKeys].reverse();
+    const route = returnRoute.length >= 2 ? returnRoute : primaryExplorationRoute.routeKeys.slice(0, 2).reverse();
+    const etaMinutes = Math.max(1, Math.ceil(route.length * 0.75));
+    const arrivalAt = new Date(now.getTime() + etaMinutes * 60_000).toISOString();
+    const routeSteps = route.slice(1).map((coordKey, index) => ({
+      coordKey,
+      legMinutes: 0.75,
+      elapsedMinutes: (index + 1) * 0.75,
+      arrivalAt: new Date(now.getTime() + (index + 1) * 0.75 * 60_000).toISOString(),
+    }));
 
     setImperialState((current) => ({
       ...current,
-      resources: {
-        ...current.resources,
-        supplies: Math.max(0, current.resources.supplies - exploreCost),
-      },
-      exploredCoordKeys: Array.from(new Set([...(current.exploredCoordKeys ?? []), ...routeRevealKeys, selectedTile.coordKey])).slice(0, 800),
-      discoveriesByCoord: {
-        ...(current.discoveriesByCoord ?? {}),
-        [selectedTile.coordKey]: discovery,
-      },
-      logs: [`Exploração concluída em ${selectedTile.q}:${selectedTile.r} - ${discovery.title}`, ...current.logs].slice(0, 12),
+      mapMovements: current.mapMovements.map((movement) =>
+        movement.id === primaryExplorationRoute.id
+          ? {
+              ...movement,
+              launchedAt: now.toISOString(),
+              arrivalAt,
+              etaMinutes,
+              sourceCoord: route[0] ?? movement.sourceCoord,
+              targetCoord: route[route.length - 1] ?? movement.sourceCoord,
+              route,
+              routeSteps,
+              meta: {
+                ...movement.meta,
+                targetLabel: "Retorno à capital",
+              },
+            }
+          : movement,
+      ),
+      logs: [`Exploração chamada de volta. Retorno estimado em ${etaMinutes}m.`, ...current.logs].slice(0, 12),
     }));
 
-    setExplorationReveal(discovery);
-    setActionStep("choose");
-    setActiveAction("inspect");
-    setMovementDraft(null);
-    setMovementMessage(
-      `Exploração (sem tropas) concluída. Gasto: ${exploreCost.toLocaleString("pt-BR")} suprimentos. Comprometido: 0 tropas.`,
-    );
-    setSubmittingExploration(false);
+    const message = `Retorno computado. Exploração voltando para a capital/origem em ${etaMinutes}m.`;
+    setMovementMessage(message);
+    emitUiToast({ tone: "info", title: "Retorno computado", message });
   };
 
   const handleStartMilitaryOperation = () => {
@@ -2501,33 +2707,45 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
 
     const targetingPortal = movementDraft.to.q === 0 && movementDraft.to.r === 0;
     if (targetingPortal && !canEnterPortal(sovereigntyScore)) {
-      setMovementMessage("Sua linhagem não possui Influência suficiente (1500 pts) para desafiar o Portal.");
+      const message = "Sua linhagem não possui Influência suficiente (1500 pts) para desafiar o Portal.";
+      setMovementMessage(message);
+      emitUiToast({ tone: "error", title: "Movimento bloqueado", message });
       return;
     }
 
     if (movementDraft.action === "build" && buildMode === "outpost" && villageCapReached) {
-      setMovementMessage(`Limite de ${PLAYER_VILLAGE_CAP} cidades alcancado. Use Estrada ou abandone para abrir espaco.`);
+      const message = `Limite de ${PLAYER_VILLAGE_CAP} cidades alcancado. Use Estrada ou abandone para abrir espaco.`;
+      setMovementMessage(message);
+      emitUiToast({ tone: "error", title: "Construção bloqueada", message });
       return;
     }
 
     if (movementDraft.action === "build" && !canAffordBuild) {
-      setMovementMessage("Recursos insuficientes para construir neste tile.");
+      const message = "Recursos insuficientes para construir neste tile.";
+      setMovementMessage(message);
+      emitUiToast({ tone: "error", title: "Construção bloqueada", message });
       return;
     }
 
     const isTroopAction = movementDraft.action === "go" || movementDraft.action === "attack";
     if (isTroopAction && troopDispatchTotal <= 0) {
-      setMovementMessage("Selecione ao menos uma tropa para enviar.");
+      const message = "Selecione ao menos uma tropa para enviar.";
+      setMovementMessage(message);
+      emitUiToast({ tone: "error", title: "Movimento bloqueado", message });
       return;
     }
 
     if (movementDraft.action === "annex" && colonyDiplomacy.free <= 0) {
-      setMovementMessage("Nenhum diplomata livre para anexar esta cidade.");
+      const message = "Nenhum diplomata livre para anexar esta cidade.";
+      setMovementMessage(message);
+      emitUiToast({ tone: "error", title: "Anexação bloqueada", message });
       return;
     }
 
     if (movementDraft.action === "annex" && !selectedAnnexDiplomatToken) {
-      setMovementMessage("Escolha 1 diplomata para acompanhar a anexacao.");
+      const message = "Escolha 1 diplomata para acompanhar a anexacao.";
+      setMovementMessage(message);
+      emitUiToast({ tone: "error", title: "Anexação bloqueada", message });
       return;
     }
 
@@ -2642,13 +2860,6 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
         }));
       }
 
-      if (movementDraft.action === "spy") {
-        setImperialState((current) => ({
-          ...current,
-          logs: [`Espionagem disparada em (${selectedTile.q},${selectedTile.r})`, ...current.logs].slice(0, 12),
-        }));
-      }
-
       if (movementDraft.action === "annex") {
         setImperialState((current) => ({
           ...current,
@@ -2657,44 +2868,52 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
         }));
       }
 
-      setMovementMessage(
-        targetingPortal
-          ? `Expedicao ${stored.id.slice(0, 8)} em marcha ao Portal. Se sua Influencia cair abaixo de ${SOVEREIGNTY_PORTAL_CUT}, a entrada falhara no destino.${stored.meta.regroupMode ? ` Mobilizacao Livre x${PHASE4_REGROUP_SPEED_MULT} ativa.` : ""}`
-          : movementDraft.action === "attack"
-            ? isRealEnemyAttack
-              ? serverAttackSent
-                ? isAbandonedTarget
-                  ? `Tropas enviadas para OCUPAR ${selectedSite?.name ?? "a cidade abandonada"}. ETA ~2 min — se vencer a guarnição e sobrar gente, ela vira sua colônia (com a infra que já tinha). Comprometido: ${troopDispatchTotal.toLocaleString("pt-BR")} tropas (${formatTroopCommitment(troopDispatch)}).`
-                  : `Ataque REAL enviado ao servidor contra ${selectedSite?.name ?? "alvo"}. ETA ~2 min — o tick do mundo resolve combate, saque e conquista. Comprometido: ${troopDispatchTotal.toLocaleString("pt-BR")} tropas (${formatTroopCommitment(troopDispatch)}).`
-                : `Servidor recusou o ataque: ${serverAttackError ?? "erro desconhecido"}.`
-              : `Operação militar registrada. ETA ${formatMinutesLabel(stored.etaMinutes)}. Comprometido: ${troopDispatchTotal.toLocaleString("pt-BR")} tropas (${formatTroopCommitment(troopDispatch)}). Gasto imediato: 0 suprimentos.`
-            : movementDraft.action === "annex"
-              ? `Anexacao ${stored.id.slice(0, 8)} registrada. ${selectedAnnexDiplomatToken} ficou em missao ate a consolidacao da cidade.`
-              : movementDraft.action === "go"
-                ? `Operação militar de marcha registrada. ETA ${formatMinutesLabel(stored.etaMinutes)}. Comprometido: ${troopDispatchTotal.toLocaleString("pt-BR")} tropas (${formatTroopCommitment(troopDispatch)}). Gasto imediato: 0 suprimentos.`
-                : `Movimento ${stored.id.slice(0, 8)} registrado em map_movements. ETA ${formatMinutesLabel(stored.etaMinutes)}.${isTroopAction ? ` Tropa: ${troopDispatchTotal.toLocaleString("pt-BR")} (${troopPreset}).` : ""}`,
-      );
+      const successMessage = targetingPortal
+        ? `Expedicao ${stored.id.slice(0, 8)} em marcha ao Portal. Se sua Influencia cair abaixo de ${SOVEREIGNTY_PORTAL_CUT}, a entrada falhara no destino.${stored.meta.regroupMode ? ` Mobilizacao Livre x${PHASE4_REGROUP_SPEED_MULT} ativa.` : ""}`
+        : movementDraft.action === "attack"
+          ? isRealEnemyAttack
+            ? serverAttackSent
+              ? isAbandonedTarget
+                ? `Tropas enviadas para OCUPAR ${selectedSite?.name ?? "a cidade abandonada"}. ETA ~2 min. Comprometido: ${troopDispatchTotal.toLocaleString("pt-BR")} tropas (${formatTroopCommitment(troopDispatch)}).`
+                : `Ataque REAL enviado ao servidor contra ${selectedSite?.name ?? "alvo"}. ETA ~2 min. Comprometido: ${troopDispatchTotal.toLocaleString("pt-BR")} tropas (${formatTroopCommitment(troopDispatch)}).`
+              : `Servidor recusou o ataque: ${serverAttackError ?? "erro desconhecido"}.`
+            : `Operação militar registrada. ETA ${formatMinutesLabel(stored.etaMinutes)}. Comprometido: ${troopDispatchTotal.toLocaleString("pt-BR")} tropas (${formatTroopCommitment(troopDispatch)}). Gasto imediato: 0 suprimentos.`
+          : movementDraft.action === "annex"
+            ? `Anexacao ${stored.id.slice(0, 8)} registrada. ${selectedAnnexDiplomatToken} ficou em missao ate a consolidacao da cidade.`
+            : movementDraft.action === "go"
+              ? `Operação militar de marcha registrada. ETA ${formatMinutesLabel(stored.etaMinutes)}. Comprometido: ${troopDispatchTotal.toLocaleString("pt-BR")} tropas (${formatTroopCommitment(troopDispatch)}). Gasto imediato: 0 suprimentos.`
+              : `Movimento ${stored.id.slice(0, 8)} registrado em map_movements. ETA ${formatMinutesLabel(stored.etaMinutes)}.${isTroopAction ? ` Tropa: ${troopDispatchTotal.toLocaleString("pt-BR")} (${troopPreset}).` : ""}`;
+
+      setMovementMessage(successMessage);
+      emitUiToast({
+        tone: serverAttackError ? "error" : "success",
+        title: serverAttackError ? "Ordem recusada" : "Ordem computada",
+        message: successMessage,
+      });
       setImperialState((current) => ({
         ...current,
         mapMovements: [stored, ...current.mapMovements].slice(0, 1200),
       }));
     } catch {
-      setMovementMessage("Falha ao registrar movimento. Tente novamente.");
+      const message = "Falha ao registrar movimento. Tente novamente.";
+      setMovementMessage(message);
+      emitUiToast({ tone: "error", title: "Movimento falhou", message });
     } finally {
       setSubmittingMovement(false);
     }
   };
 
   const counts = useMemo(() => {
+    const visibleSites = mappedSites.filter((site) => currentVisionCoordKeys.has(site.coordKey) || visitedCoordKeys.has(site.coordKey));
     return {
-      all: mappedSites.length,
-      self: mappedSites.filter((site) => site.faction === "self").length,
-      tribe: mappedSites.filter((site) => site.faction === "tribe").length,
-      ally: mappedSites.filter((site) => site.faction === "ally").length,
-      enemy: mappedSites.filter((site) => site.faction === "enemy").length,
-      abandoned: mappedSites.filter((site) => site.faction === "abandoned").length,
+      all: visibleSites.length,
+      self: visibleSites.filter((site) => site.faction === "self").length,
+      tribe: visibleSites.filter((site) => site.faction === "tribe").length,
+      ally: visibleSites.filter((site) => site.faction === "ally").length,
+      enemy: visibleSites.filter((site) => site.faction === "enemy").length,
+      abandoned: visibleSites.filter((site) => site.faction === "abandoned").length,
     };
-  }, [mappedSites]);
+  }, [currentVisionCoordKeys, mappedSites, visitedCoordKeys]);
 
   const movementInfo = useMemo(() => {
     const oneHex = { q: 1, r: 0 };
@@ -2732,6 +2951,14 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
       : selectedMapStatus === "RETORNANDO"
         ? "border-amber-300/70 bg-amber-500/20 text-amber-100"
         : "border-slate-300/35 bg-slate-500/12 text-slate-200";
+  const selectedTileHidden = Boolean(selectedTile && !selectedCoordKnown && !selectedTile.isCentralThrone);
+  const mapEventCards = useMemo(
+    () =>
+      Object.values(imperialState.discoveriesByCoord ?? {})
+        .filter((discovery) => discovery.status === "new")
+        .slice(0, 3),
+    [imperialState.discoveriesByCoord],
+  );
   const detailModeActive = zoom >= DETAIL_ZOOM_THRESHOLD;
   const macroVisionActive = zoom < MACRO_VISION_THRESHOLD;
   const microVisionActive = zoom >= MICRO_VISION_THRESHOLD;
@@ -2741,7 +2968,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     }
 
     const centers = [
-      selectedTile ? { q: selectedTile.q, r: selectedTile.r } : ZERO_AXIAL,
+      selectedTile && selectedCoordKnown ? { q: selectedTile.q, r: selectedTile.r } : ZERO_AXIAL,
       marchOrigin ?? ZERO_AXIAL,
       ZERO_AXIAL,
     ];
@@ -2755,7 +2982,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
       }
       return false;
     });
-  }, [currentVisionCoordKeys, marchOrigin, microVisionActive, selectedTile, visitedCoordKeys, world.tiles]);
+  }, [currentVisionCoordKeys, marchOrigin, microVisionActive, selectedCoordKnown, selectedTile, visitedCoordKeys, world.tiles]);
   return (
     <section className="space-y-2 bg-black text-slate-100" data-smoke="strategic-map">
       <article className="overflow-hidden rounded-none border border-white/10 bg-black p-2 shadow-[0_0_70px_rgba(34,211,238,0.08)] sm:rounded-2xl">
@@ -3046,6 +3273,9 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
               const visited = visitedCoordKeys.has(node.coordKey);
               const memoryOnly = !FOG_VISUAL_DISABLED && visited && !inVision;
               const fogged = !FOG_VISUAL_DISABLED && !visited && !inVision;
+              if (fogged && !node.isCenter && !node.hasRouteActivity) {
+                return null;
+              }
               const showLabel = zoomLevel < 4 && !macroVisionActive && (node.isSelected || microVisionActive || (!muted && zoom >= 1.35 && node.state !== "unknown"));
               const icon = node.isCenter
                 ? "◎"
@@ -3193,6 +3423,56 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
             ))}
           </div>
 
+          {mapEventCards.length > 0 ? (
+            <div
+              data-smoke="map-event-stack"
+              className="pointer-events-none absolute left-3 top-[5.7rem] z-20 flex w-[min(21rem,calc(100%-6.5rem))] flex-col gap-2"
+            >
+              {mapEventCards.map((event, index) => {
+                const accent = discoveryAccent(event.type);
+                const coord = parseLegacyCoord(event.coordKey);
+                return (
+                  <button
+                    key={`${event.coordKey}-${event.title}`}
+                    type="button"
+                    data-map-hud="true"
+                    onPointerDown={swallowHudPointer}
+                    onPointerUp={swallowHudPointer}
+                    onClick={(clickEvent) => {
+                      swallowHudClick(clickEvent);
+                      setSelectedCoordKey(event.coordKey);
+                      setInspectedCoordKey(event.coordKey);
+                      setDetailOpen(true);
+                      setExplorationReveal(event);
+                      emitUiFeedback("open", "medium");
+                    }}
+                    className={`pointer-events-auto w-full rounded-2xl border p-2.5 text-left shadow-[0_16px_40px_rgba(0,0,0,0.42)] backdrop-blur-xl transition hover:-translate-y-0.5 ${accent.panel}`}
+                    style={{
+                      transform: `translateY(${index * -2}px) scale(${1 - index * 0.025})`,
+                      opacity: 1 - index * 0.1,
+                      boxShadow: `0 0 28px ${accent.glow}`,
+                    }}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className={`inline-flex rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.16em] ${accent.chip}`}>
+                          {discoveryTypeLabel(event.type)}
+                        </p>
+                        <p className="mt-1 truncate text-xs font-black text-slate-50">{event.title}</p>
+                      </div>
+                      <span className="shrink-0 rounded-full border border-white/15 bg-black/35 px-2 py-0.5 text-[9px] font-bold text-slate-200">
+                        {coord.q}:{coord.r}
+                      </span>
+                    </div>
+                    <p className="mt-1 line-clamp-2 text-[10px] font-semibold leading-4 text-slate-300">
+                      {event.summary}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+
           <div
             data-smoke="troop-occupation-strip"
             className={`pointer-events-none absolute inset-x-3 bottom-3 z-20 rounded-2xl border px-3 py-2 shadow-[0_18px_44px_rgba(0,0,0,0.38)] backdrop-blur-xl ${
@@ -3219,6 +3499,21 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                 <span className="text-slate-500">/</span>
                 <span>{troopSelectionTotal(troopPool).toLocaleString("pt-BR")} livres</span>
                 {activeMovementRoutes.length > 1 ? <span className="text-cyan-100">+{activeMovementRoutes.length - 1} rota</span> : null}
+                {primaryExplorationRoute ? (
+                  <button
+                    type="button"
+                    data-map-hud="true"
+                    onPointerDown={swallowHudPointer}
+                    onPointerUp={swallowHudPointer}
+                    onClick={(event) => {
+                      swallowHudClick(event);
+                      handleReturnExploration();
+                    }}
+                    className="pointer-events-auto rounded-full border border-cyan-200/45 bg-cyan-500/14 px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-cyan-50 hover:bg-cyan-500/24"
+                  >
+                    Retornar
+                  </button>
+                ) : null}
               </div>
             </div>
             {primaryActiveRoute ? (
@@ -3304,11 +3599,23 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                 <div className="flex items-center justify-between gap-2">
                   <div>
                     <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-200">
-                      {selectedTile.isCentralThrone ? "Portal" : selectedSite ? "Cidade" : selectedHotspot ? "Ponto especial" : "Território"}
+                      {selectedTile.isCentralThrone
+                        ? "Portal"
+                        : selectedTileHidden
+                          ? "Região oculta"
+                          : selectedSite
+                            ? "Cidade"
+                            : selectedHotspot
+                              ? "Ponto especial"
+                              : "Território"}
                     </p>
-                    <p className="text-base font-black text-slate-50">{selectedStrategicNode?.label ?? `Hex ${selectedTile.q}:${selectedTile.r}`}</p>
+                    <p className="text-base font-black text-slate-50">
+                      {selectedTileHidden ? "Região sob névoa" : selectedStrategicNode?.label ?? `Hex ${selectedTile.q}:${selectedTile.r}`}
+                    </p>
                     <p className="text-[11px] font-semibold text-slate-400">
-                      {selectedSite?.faction === "self"
+                      {selectedTileHidden
+                        ? "Explore para revelar"
+                        : selectedSite?.faction === "self"
                         ? "Sua área"
                         : selectedSite?.faction === "enemy"
                           ? "Hostil"
@@ -3343,6 +3650,12 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                   </div>
                 ) : null}
 
+                {!worldStarted && !readOnly ? (
+                  <div className="mt-2 rounded-2xl border border-cyan-300/24 bg-cyan-500/12 px-3 py-2 text-[11px] font-semibold text-cyan-100">
+                    Mundo aguardando início. Inspeção é livre, mas ordens de jogo só entram depois do play do GM ou do horário agendado.
+                  </div>
+                ) : null}
+
                 <div
                   className="mt-3 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/88"
                   style={{
@@ -3354,10 +3667,12 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                   <div className="flex min-h-[118px] items-end justify-between p-3">
                     <div className="min-w-0">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-100/80">
-                        {selectedSite?.terrainLabel ?? TERRAIN_META[selectedTile.terrainKind].label}
+                        {selectedTileHidden ? "Terreno sob névoa" : selectedSite?.terrainLabel ?? TERRAIN_META[selectedTile.terrainKind].label}
                       </p>
                       <p className="mt-1 text-base font-black text-slate-50">
-                        {selectedTile.isCentralThrone
+                        {selectedTileHidden
+                          ? "Conteúdo oculto"
+                          : selectedTile.isCentralThrone
                           ? portalEligible ? "Centro Liberado" : "Centro Bloqueado"
                           : selectedDiscovery
                             ? selectedDiscovery.title
@@ -3414,7 +3729,9 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                   <div className="rounded-xl border border-white/10 bg-white/[0.045] p-2">
                     <span className="block text-slate-500">TIPO</span>
                     <span className="mt-1 block truncate text-slate-100">
-                      {selectedDiscovery
+                      {selectedTileHidden
+                        ? "Oculto"
+                        : selectedDiscovery
                         ? discoveryTypeLabel(selectedDiscovery.type)
                         : selectedSite?.occupationKind === "abandoned_city"
                           ? "Vazia"
@@ -3433,7 +3750,9 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
 
                 <div className="mt-2 rounded-xl border border-white/10 bg-white/[0.04] p-2 text-[11px] font-semibold text-slate-300">
                   <p>
-                    {selectedSite?.faction === "enemy"
+                    {selectedTileHidden
+                      ? "Conteúdo oculto. Envie exploração para revelar aldeia, risco, ruína ou oportunidade real deste hex."
+                      : selectedSite?.faction === "enemy"
                       ? "Cidade ocupada por rival. Ação principal: atacar."
                       : selectedSite?.occupationKind === "abandoned_city"
                         ? "Cidade vazia. Ação principal: anexar com diplomata."
@@ -3462,7 +3781,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                         type="button"
                         onClick={() => {
                           setActionStep("choose");
-                          setActiveAction("inspect");
+                          setActiveAction("explore");
                           setMovementDraft(null);
                           setMovementMessage(null);
                         }}
@@ -3558,13 +3877,6 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                   </div>
                 ) : null}
 
-                {actionStep === "configure" && activeAction === "spy" ? (
-                  <div className="mt-2 rounded-lg border border-white/20 bg-white/8 p-2 text-[11px] text-slate-100">
-                    <p>Preparacao: {formatMinutesLabel(spyCost.prepMinutes)}</p>
-                    <p>Requisito: Heroi Espiao {HAS_SPY_HERO ? "ativo" : "inativo"}</p>
-                  </div>
-                ) : null}
-
                 {actionStep === "configure" && activeAction === "explore" ? (
                   <div
                     className="mt-2 overflow-hidden rounded-2xl border border-cyan-200/25 bg-slate-950/88 text-[11px] text-slate-100"
@@ -3582,12 +3894,12 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                         Revelar esta área
                       </p>
                       <p className="mt-1 max-w-[28ch] text-[11px] leading-4 text-slate-200">
-                        Seus batedores abrem o terreno, registram risco e podem encontrar cidade vazia, ruína, ameaça ou oportunidade.
+                        A exploração abre o terreno, registra risco e pode encontrar cidade vazia, ruína, ameaça ou oportunidade em qualquer ponto da rota.
                       </p>
 
                       <div className="mt-3 grid grid-cols-1 gap-2 text-[10px] font-bold text-slate-100">
                         <div className="rounded-xl border border-cyan-300/35 bg-cyan-500/12 px-2.5 py-2">
-                          Explorar (sem tropas): só consome suprimentos.
+                          Explorar área: consome suprimentos, leva tempo e pode revelar acontecimentos em qualquer tile atravessado.
                         </div>
                         <div className="rounded-xl border border-rose-300/35 bg-rose-500/12 px-2.5 py-2">
                           Operação militar (usa tropas do Império): compromete tropas até chegada.
@@ -3612,7 +3924,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                           disabled={submittingExploration || imperialState.resources.supplies < exploreCost || visitedCoordKeys.has(selectedTile.coordKey)}
                           className="w-full rounded-xl border border-cyan-300/60 bg-cyan-500/20 px-3 py-2 text-center text-xs font-black text-cyan-50 transition hover:bg-cyan-500/28 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          {submittingExploration ? "Explorando..." : "Explorar (sem tropas)"}
+                          {submittingExploration ? "Explorando..." : "Explorar área"}
                         </button>
                         <button
                           type="button"

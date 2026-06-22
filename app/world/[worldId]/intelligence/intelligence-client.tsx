@@ -321,8 +321,8 @@ export function IntelligenceClient({
       >
         <div className="relative z-10 flex items-start justify-between gap-3">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-100/80">Cockpit diário</p>
-            <h2 className="mt-1 text-xl font-black leading-tight text-slate-50">Dia {world.day}: {guide.beginnerTitle}</h2>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-100/80">Hoje no Reino</p>
+            <h2 className="mt-1 text-xl font-black leading-tight text-slate-50">Dia {world.day}: ordem da Coroa</h2>
             <p className="mt-1 text-[12px] leading-5 text-slate-200">{guide.nextAction}</p>
           </div>
           <span className={`shrink-0 rounded-2xl border px-2.5 py-2 text-center text-[10px] font-black uppercase tracking-[0.12em] ${riskClass}`}>
@@ -332,11 +332,11 @@ export function IntelligenceClient({
 
         <div className="relative z-10 mt-3 grid grid-cols-2 gap-2">
           <div className="rounded-2xl border border-white/10 bg-slate-950/42 p-2 backdrop-blur-md">
-            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">Próximo marco</p>
+            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">O que mudou</p>
             <p className="mt-1 text-[12px] font-bold leading-5 text-slate-100">{guide.checkpoints[0]}</p>
           </div>
           <div className="rounded-2xl border border-white/10 bg-slate-950/42 p-2 backdrop-blur-md">
-            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">Build</p>
+            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">Plano atual</p>
             <p className="mt-1 text-base font-black text-emerald-100">{guide.build.label}</p>
             <p className="text-[10px] text-slate-300">{mergedVillages.length} cidades · {heroCount}/10 heróis</p>
           </div>
@@ -350,7 +350,7 @@ export function IntelligenceClient({
               className="inline-flex items-center justify-center gap-1 rounded-2xl border border-amber-300/35 bg-amber-500/16 px-3 py-3 text-[11px] font-black text-amber-50"
             >
               <Target className="h-4 w-4" />
-              Melhor clique
+              Executar ordem
             </button>
           ) : null}
           <button
@@ -359,14 +359,14 @@ export function IntelligenceClient({
             className="inline-flex items-center justify-center gap-1 rounded-2xl border border-cyan-300/35 bg-cyan-500/16 px-3 py-3 text-[11px] font-black text-cyan-50"
           >
             <Compass className="h-4 w-4" />
-            Ir para {guide.recommendedTab === "base" ? "Cidades" : guide.recommendedTab === "board" ? "Mapa" : guide.recommendedTab === "empire" ? "Império" : "Intel"}
+            Abrir {guide.recommendedTab === "base" ? "Cidades" : guide.recommendedTab === "board" ? "Mundo" : guide.recommendedTab === "empire" ? "Império" : "Intel"}
           </button>
         </div>
       </article>
 
       <article className="kw-glass rounded-3xl p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h2 className="kw-title text-base">Decisões agora</h2>
+          <h2 className="kw-title text-base">Riscos e decisões</h2>
           <span className="kw-subtle text-[11px]">{hasSenateMeeting ? "Senado ativo" : "Run ativa"}</span>
         </div>
 
@@ -403,7 +403,7 @@ export function IntelligenceClient({
 
       <article className="kw-glass rounded-3xl p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h2 className="kw-title text-base">Notas do reino</h2>
+          <h2 className="kw-title text-base">Eventos recentes</h2>
           <span className="kw-subtle text-[11px]">{feed.length} sinais</span>
         </div>
 

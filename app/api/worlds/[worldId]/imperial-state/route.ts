@@ -4,6 +4,7 @@ import { calculateCityDailyProduction } from "@/core/GameBalance";
 import { normalizeImperialVillageIds, stripDedicatedImperialClientState } from "@/lib/imperial-persistence";
 import { supabaseDelete, supabasePatchReturning, supabaseRpc, supabaseSelect, supabaseUpsert } from "@/lib/supabase-rest";
 import { getWorldPayload } from "@/lib/world-data";
+import { calculateCachedPowerScore } from "@/lib/world-rules";
 
 type StoredImperialStateRow = {
   version: number;
@@ -926,6 +927,17 @@ export async function PUT(
       typeof nextStateRecord.royalCapitalVillageId === "string" ? nextStateRecord.royalCapitalVillageId : payload.world.activeVillageId,
       nextTroops,
     );
+
+    const playerPatchParams = new URLSearchParams();
+    playerPatchParams.set("id", `eq.${payload.worldPlayerId}`);
+    await supabasePatchReturning<{ power_score_cached: number }, { id: string }>("world_players", playerPatchParams, {
+      power_score_cached: calculateCachedPowerScore({
+        militia: Number(nextTroops.militia ?? 0),
+        shooters: Number(nextTroops.shooters ?? 0),
+        scouts: Number(nextTroops.scouts ?? 0),
+        machinery: Number(nextTroops.machinery ?? 0),
+      }),
+    });
 
     // Recalcula taxa de produção/consumo após qualquer mudança de estado
     void recalculatePlayerRates(

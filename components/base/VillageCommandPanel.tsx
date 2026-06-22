@@ -3,7 +3,7 @@
 import { CheckCircle2, Crown, Shield, ShieldAlert, Sparkles, Swords, TrendingUp, Users, Wrench } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import { calculateVillageDevelopment } from "@/core/GameBalance";
+import { calculateTroopPower, calculateVillageDevelopment } from "@/core/GameBalance";
 import type { BuildingId } from "@/lib/buildings";
 import {
   projectStructureLevelsToBuildingLevels,
@@ -144,6 +144,10 @@ function calcRecruitCost(plan: RecruitPlan, localCommand: LocalCommand): Imperia
   };
 }
 
+function calcRecruitPowerGain(plan: RecruitPlan, amount: number): number {
+  return calculateTroopPower({ [plan.key]: amount });
+}
+
 function clampPercent(value: number): number {
   return Math.max(0, Math.min(100, value));
 }
@@ -187,6 +191,7 @@ export function VillageCommandPanel({ worldId, village, villages, localCommand }
   const [highlightedAction, setHighlightedAction] = useState<string | null>(null);
 
   const totalTroops = sumTroops(centralTroops);
+  const militaryRating = calculateTroopPower(centralTroops);
   const deployedTotal = Object.values(deployedByVillage).reduce((acc, value) => acc + Math.max(0, Math.floor(value)), 0);
   const availableTroops = Math.max(0, totalTroops - deployedTotal);
   const currentDeployment = deployedByVillage[village.id] ?? 0;
@@ -441,33 +446,33 @@ export function VillageCommandPanel({ worldId, village, villages, localCommand }
 
       <article className="kw-glass rounded-3xl p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h2 className="kw-title text-base">Comando da Cidade</h2>
+          <h2 className="kw-title text-base">Exercito da Coroa</h2>
           <span className="kw-subtle text-[11px]">{village.name} · {village.type}</span>
         </div>
 
         <div className="grid grid-cols-3 gap-2 text-slate-100">
           <div className="kw-glass-soft kw-status-card">
             <div className="kw-icon-core"><Swords className="h-5 w-5 text-rose-300" /></div>
-            <p className="kw-card-title mt-2">Legiao Central</p>
-            <p className="kw-card-meta">{formatCompact(totalTroops)} em {capitalVillage.name}</p>
+            <p className="kw-card-title mt-2">Rating militar</p>
+            <p className="kw-card-meta">{formatCompact(militaryRating)} poder</p>
           </div>
           <div className="kw-glass-soft kw-status-card">
             <div className="kw-icon-core"><Shield className="h-5 w-5 text-sky-300" /></div>
-            <p className="kw-card-title mt-2">Disponivel</p>
+            <p className="kw-card-title mt-2">Livres</p>
             <p className="kw-card-meta">{formatCompact(availableTroops)} prontas</p>
           </div>
           <div className="kw-glass-soft kw-status-card">
             <div className="kw-icon-core"><Wrench className="h-5 w-5 text-amber-300" /></div>
-            <p className="kw-card-title mt-2">Postura</p>
-            <p className="kw-card-meta">{LOCAL_COMMAND_META[localCommand].label}</p>
+            <p className="kw-card-title mt-2">Defendendo</p>
+            <p className="kw-card-meta">{formatCompact(deployedTotal)} alocadas</p>
           </div>
           <div className="kw-glass-soft kw-status-card col-span-3">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <div className="kw-icon-core !h-10 !w-10"><TrendingUp className="h-4 w-4 text-emerald-300" /></div>
                 <div>
-                  <p className="kw-card-title">Sinal de progresso</p>
-                  <p className="kw-card-meta">Cada acao empurra defesa, tropas ou preparacao local</p>
+                  <p className="kw-card-title">Forca disponivel: {formatCompact(totalTroops)} tropas</p>
+                  <p className="kw-card-meta">{LOCAL_COMMAND_META[localCommand].label}: {LOCAL_COMMAND_META[localCommand].summary}</p>
                 </div>
               </div>
               <span className="rounded-full border border-emerald-300/30 bg-emerald-400/10 px-2 py-1 text-[10px] font-bold text-emerald-100">
@@ -573,20 +578,22 @@ export function VillageCommandPanel({ worldId, village, villages, localCommand }
       <article className="kw-glass rounded-3xl p-3">
         <div className="mb-2 flex items-center gap-2">
           <Users className="h-4 w-4 text-sky-300" />
-          <h2 className="kw-title text-base">Recrutamento (Capital)</h2>
+          <h2 className="kw-title text-base">Recrutar na Capital</h2>
         </div>
 
         <div className="kw-status-grid kw-status-grid--2">
           {RECRUITMENT.map((plan) => {
             const amount = Math.max(1, Math.round(plan.amount * modifiers.batchMult));
             const cost = calcRecruitCost(plan, localCommand);
+            const powerGain = calcRecruitPowerGain(plan, amount);
             const affordable = canAfford(plan);
             return (
               <div key={plan.key} className="kw-glass-soft kw-status-card text-slate-100">
-                <span className="kw-badge">+{amount}</span>
+                <span className="kw-badge">+{powerGain} poder</span>
                 <div className="kw-icon-core"><Swords className="h-5 w-5 text-rose-300" /></div>
                 <p className="kw-card-title mt-2">{plan.label}</p>
-                <p className="kw-card-meta">{plan.role} · {centralTroops[plan.key]} ativas</p>
+                <p className="kw-card-meta">{plan.role}</p>
+                <p className="mt-1 text-[11px] text-slate-300">+{amount} unidades · {centralTroops[plan.key]} atuais</p>
                 <p className="mt-1 text-[11px] text-slate-300">Custo: M{cost.materials} / S{cost.supplies}</p>
                 <button
                   type="button"

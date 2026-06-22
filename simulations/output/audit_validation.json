@@ -7,6 +7,6 @@
     "A abertura exata/estado aberto de cada quest nao e persistido; a auditoria registra gates, conclusoes e bloqueios observaveis.",
     "A trilha tribal atual e booleana no simulador; a auditoria registra ativacao, efeito e marcos do fluxo final."
   ],
-  "generatedAt": "2026-05-04T20:53:32.919Z",
+  "generatedAt": "2026-06-22T12:35:43.741Z",
   "outputBasename": "season_v2_paired8"
 }

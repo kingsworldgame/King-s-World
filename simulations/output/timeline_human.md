@@ -25,8 +25,8 @@
 - D39: 1a aldeia 100/100: A capital ou vila foco fechou o primeiro teto estrutural.
 - D90: Gate do Portal: A run passou do corte de 1500 de influencia.
 - D91: Inicio do Exodus: A fase final do mundo ficou ativa.
-- D115: Marcha iniciada: A run iniciou a marcha final com ETA 72h.
-- D118: Entrada no Portal: Entrada confirmada com 2500 de influencia.
+- D114: Marcha iniciada: A run iniciou a marcha final com ETA 82.39h.
+- D117: Entrada no Portal: Entrada confirmada com 2500 de influencia.
 - D120: tropas gastas em confronto
 
 | Dia | Fase | Recursos | Infl. | Tropas | Eventos | Resumo |
@@ -144,11 +144,11 @@
 | 111 | IV: Exodo | M 128808 | S 89867 | E 82472 | I 14416 | 2480 | 770 | Sem marco novo | Influencia 2480 (+1) | aldeias 10 | tropas 770 | sem upgrade estrutural | sem confronto |
 | 112 | IV: Exodo | M 130672 | S 91199 | E 83672 | I 14620 | 2481 | 735 | Sem marco novo | Influencia 2481 (+1) | aldeias 10 | tropas 735 | sem upgrade estrutural | sem confronto |
 | 113 | IV: Exodo | M 132536 | S 92533 | E 84872 | I 14824 | 2483 | 701 | Sem marco novo | Influencia 2483 (+2) | aldeias 10 | tropas 701 | sem upgrade estrutural | sem confronto |
-| 114 | IV: Exodo | M 134400 | S 93869 | E 86072 | I 15028 | 2484 | 666 | Sem marco novo | Influencia 2484 (+1) | aldeias 10 | tropas 666 | sem upgrade estrutural | sem confronto |
-| 115 | IV: Exodo | M 136264 | S 95207 | E 87272 | I 15232 | 2485 | 632 | [MARCO] Marcha iniciada + Iniciou marcha ao Portal | Influencia 2485 (+1) | aldeias 10 | tropas 632 | sem upgrade estrutural | sem confronto |
+| 114 | IV: Exodo | M 134400 | S 93869 | E 86072 | I 15028 | 2484 | 666 | [MARCO] Marcha iniciada + Iniciou marcha ao Portal | Influencia 2484 (+1) | aldeias 10 | tropas 666 | sem upgrade estrutural | sem confronto |
+| 115 | IV: Exodo | M 136264 | S 95207 | E 87272 | I 15232 | 2485 | 632 | Sem marco novo | Influencia 2485 (+1) | aldeias 10 | tropas 632 | sem upgrade estrutural | sem confronto |
 | 116 | IV: Exodo | M 138128 | S 96546 | E 88472 | I 15436 | 2487 | 597 | Sem marco novo | Influencia 2487 (+2) | aldeias 10 | tropas 597 | sem upgrade estrutural | sem confronto |
-| 117 | IV: Exodo | M 139992 | S 97887 | E 89672 | I 15640 | 2488 | 563 | Sem marco novo | Influencia 2488 (+1) | aldeias 10 | tropas 563 | sem upgrade estrutural | sem confronto |
-| 118 | IV: Exodo | M 141856 | S 99230 | E 90872 | I 15844 | 2489 | 528 | [MARCO] Entrada no Portal + Entrou no Portal | Influencia 2489 (+1) | aldeias 10 | tropas 528 | sem upgrade estrutural | sem confronto |
+| 117 | IV: Exodo | M 139992 | S 97887 | E 89672 | I 15640 | 2488 | 563 | [MARCO] Entrada no Portal + Entrou no Portal | Influencia 2488 (+1) | aldeias 10 | tropas 563 | sem upgrade estrutural | sem confronto |
+| 118 | IV: Exodo | M 141856 | S 99230 | E 90872 | I 15844 | 2489 | 528 | Sem marco novo | Influencia 2489 (+1) | aldeias 10 | tropas 528 | sem upgrade estrutural | sem confronto |
 | 119 | IV: Exodo | M 143720 | S 100574 | E 92072 | I 16048 | 2491 | 494 | Sem marco novo | Influencia 2491 (+2) | aldeias 10 | tropas 494 | sem upgrade estrutural | sem confronto |
 | 120 | IV: Exodo | M 145584 | S 101920 | E 93272 | I 16252 | 2492 | 459 | Sem marco novo | Influencia 2492 (+1) | aldeias 10 | tropas 459 | sem upgrade estrutural | sem confronto |
 
@@ -169,15 +169,15 @@
 
 - Representante: H01
 - Resultado: Entrou no Portal com 2500 de influencia.
-- 2a aldeia: D12 | 1a aldeia 100/100: D39 | Marcha: D115 | ETA 72h
+- 2a aldeia: D12 | 1a aldeia 100/100: D39 | Marcha: D114 | ETA 82.39h
 
 - Dias criticos:
 - D12: 2a aldeia fundada
 - D39: 1a aldeia 100/100
 - D90: Gate do Portal
 - D91: Inicio do Exodus
-- D115: Marcha iniciada
-- D118: Entrada no Portal
+- D114: Marcha iniciada
+- D117: Entrada no Portal
 - D120: tropas gastas em confronto
 
 | Dia | Infl. | Aldeias | Tropas | Recursos | Leitura jogavel | Colapsos |
@@ -213,7 +213,7 @@
 ### posto-perfect
 
 - Representante: H01
-- Resultado: Entrou no Portal com 2500 de influencia.
+- Resultado: Entrou no Portal com 2400 de influencia.
 - 2a aldeia: D14 | 1a aldeia 100/100: D46 | Marcha: D115 | ETA 72h
 
 - Dias criticos:
@@ -223,22 +223,22 @@
 - D91: Inicio do Exodus
 - D115: Marcha iniciada
 - D118: Entrada no Portal
-- D120: tropas gastas em confronto
+- D120: queda de aldeias por pressao da Horda; tropas gastas em confronto
 
 | Dia | Infl. | Aldeias | Tropas | Recursos | Leitura jogavel | Colapsos |
 | ---: | ---: | ---: | ---: | --- | --- | --- |
-| 10 | 117 | 1 | 300 | M 1048 | S 1053 | E 1234 | I 126 | economia estavel | expansao ideal | militar estavel | influencia abaixo da curva esperada | risco alto | - |
-| 20 | 356 | 3 | 465 | M 4631 | S 3458 | E 3457 | I 625 | economia estavel | expansao agressiva | militar estavel | influencia abaixo da curva esperada | risco alto | - |
-| 30 | 514 | 4 | 629 | M 10435 | S 7433 | E 7217 | I 1295 | economia estavel | expansao agressiva | militar estavel | influencia abaixo da curva esperada | risco alto | - |
-| 60 | 1702 | 7 | 1122 | M 39909 | S 27902 | E 26613 | I 4725 | economia estavel | expansao agressiva | militar estavel | influencia acima da curva esperada | risco baixo | - |
-| 90 | 2339 | 10 | 1615 | M 86787 | S 60631 | E 57793 | I 10129 | economia estavel | expansao agressiva | militar estavel | influencia dentro da curva esperada | risco baixo | - |
-| 120 | 2493 | 10 | 869 | M 142137 | S 100097 | E 94783 | I 16399 | economia estavel | expansao ideal | militar critico | influencia dentro da curva esperada | risco alto | tropas gastas em confronto |
+| 10 | 116 | 1 | 300 | M 1048 | S 1019 | E 1234 | I 126 | economia estavel | expansao ideal | militar estavel | influencia abaixo da curva esperada | risco alto | - |
+| 20 | 356 | 3 | 465 | M 4631 | S 3400 | E 3457 | I 625 | economia estavel | expansao agressiva | militar estavel | influencia abaixo da curva esperada | risco alto | - |
+| 30 | 514 | 4 | 629 | M 10435 | S 7331 | E 7217 | I 1295 | economia estavel | expansao agressiva | militar estavel | influencia abaixo da curva esperada | risco alto | - |
+| 60 | 1700 | 7 | 1122 | M 39909 | S 27578 | E 26613 | I 4725 | economia estavel | expansao agressiva | militar estavel | influencia acima da curva esperada | risco baixo | - |
+| 90 | 2337 | 10 | 1615 | M 86787 | S 59962 | E 57793 | I 10129 | economia estavel | expansao agressiva | militar estavel | influencia dentro da curva esperada | risco baixo | - |
+| 120 | 2391 | 9 | 869 | M 139377 | S 96972 | E 92908 | I 16084 | economia estavel | expansao ideal | militar critico | influencia dentro da curva esperada | risco alto | queda de aldeias por pressao da Horda; tropas gastas em confronto |
 
 ### posto-lazy
 
 - Representante: H01
 - Resultado: Falhou por influencia insuficiente no gate do Portal.
-- 2a aldeia: D19 | 1a aldeia 100/100: D46 | Marcha: D113 | ETA 112.82h
+- 2a aldeia: D19 | 1a aldeia 100/100: D46 | Marcha: D113 | ETA 109.69h
 
 - Dias criticos:
 - D19: 2a aldeia fundada
@@ -250,12 +250,12 @@
 
 | Dia | Infl. | Aldeias | Tropas | Recursos | Leitura jogavel | Colapsos |
 | ---: | ---: | ---: | ---: | --- | --- | --- |
-| 10 | 93 | 1 | 359 | M 1043 | S 1013 | E 1225 | I 120 | economia estavel | expansao lenta | militar estavel | influencia abaixo da curva esperada | risco alto | - |
-| 20 | 241 | 2 | 540 | M 3330 | S 2407 | E 2565 | I 458 | economia estavel | expansao ideal | militar estavel | influencia abaixo da curva esperada | risco alto | - |
-| 30 | 380 | 3 | 721 | M 7344 | S 4921 | E 5107 | I 758 | economia estavel | expansao ideal | militar estavel | influencia dentro da curva esperada | risco medio | - |
-| 60 | 743 | 4 | 1265 | M 26390 | S 17369 | E 17482 | I 2813 | economia estavel | expansao ideal | militar estavel | influencia dentro da curva esperada | risco alto | - |
-| 90 | 1243 | 6 | 1808 | M 54848 | S 36034 | E 36232 | I 5864 | economia estavel | expansao ideal | militar estavel | influencia dentro da curva esperada | risco alto | - |
-| 120 | 819 | 2 | 1029 | M 76627 | S 50183 | E 50506 | I 8173 | economia estavel | expansao lenta | militar critico | influencia dentro da curva esperada | risco alto | queda de aldeias por pressao da Horda; tropas gastas em confronto; perda territorial derrubou a base de score |
+| 10 | 93 | 1 | 359 | M 1043 | S 979 | E 1225 | I 120 | economia estavel | expansao lenta | militar estavel | influencia abaixo da curva esperada | risco alto | - |
+| 20 | 241 | 2 | 540 | M 3330 | S 2354 | E 2565 | I 458 | economia estavel | expansao ideal | militar estavel | influencia abaixo da curva esperada | risco alto | - |
+| 30 | 380 | 3 | 721 | M 7344 | S 4843 | E 5107 | I 758 | economia estavel | expansao ideal | militar estavel | influencia dentro da curva esperada | risco medio | - |
+| 60 | 743 | 4 | 1265 | M 26390 | S 17143 | E 17482 | I 2813 | economia estavel | expansao ideal | militar estavel | influencia dentro da curva esperada | risco alto | - |
+| 90 | 1243 | 6 | 1808 | M 54848 | S 35596 | E 36232 | I 5864 | economia estavel | expansao ideal | militar estavel | influencia dentro da curva esperada | risco alto | - |
+| 120 | 819 | 2 | 1029 | M 76627 | S 49588 | E 50506 | I 8173 | economia estavel | expansao lenta | militar critico | influencia dentro da curva esperada | risco alto | queda de aldeias por pressao da Horda; tropas gastas em confronto; perda territorial derrubou a base de score |
 
 ### bastiao-perfect
 
@@ -345,9 +345,9 @@
 | Dia | Infl. | Aldeias | Tropas | Recursos | Leitura jogavel | Colapsos |
 | ---: | ---: | ---: | ---: | --- | --- | --- |
 | 10 | 94 | 1 | 335 | M 1056 | S 1427 | E 1527 | I 114 | economia estavel | expansao ideal | militar estavel | influencia abaixo da curva esperada | risco alto | - |
-| 20 | 210 | 2 | 482 | M 3926 | S 3267 | E 3349 | I 418 | economia estavel | expansao ideal | militar estavel | influencia abaixo da curva esperada | risco alto | - |
-| 30 | 349 | 3 | 630 | M 8526 | S 6237 | E 6357 | I 762 | economia estavel | expansao ideal | militar estavel | influencia dentro da curva esperada | risco medio | - |
-| 60 | 720 | 4 | 1071 | M 28034 | S 19134 | E 19363 | I 2795 | economia estavel | expansao ideal | militar estavel | influencia dentro da curva esperada | risco alto | - |
-| 90 | 1139 | 6 | 1513 | M 57149 | S 38477 | E 38996 | I 5816 | economia estavel | expansao ideal | militar estavel | influencia dentro da curva esperada | risco alto | - |
+| 20 | 212 | 2 | 482 | M 3926 | S 3267 | E 3349 | I 418 | economia estavel | expansao ideal | militar estavel | influencia abaixo da curva esperada | risco alto | - |
+| 30 | 351 | 3 | 630 | M 8526 | S 6237 | E 6357 | I 762 | economia estavel | expansao ideal | militar estavel | influencia dentro da curva esperada | risco medio | - |
+| 60 | 725 | 4 | 1071 | M 28034 | S 19134 | E 19363 | I 2795 | economia estavel | expansao ideal | militar estavel | influencia dentro da curva esperada | risco alto | - |
+| 90 | 1146 | 6 | 1513 | M 57149 | S 38477 | E 38996 | I 5816 | economia estavel | expansao ideal | militar estavel | influencia dentro da curva esperada | risco alto | - |
 | 120 | 882 | 1 | 1173 | M 76559 | S 50808 | E 51950 | I 7811 | economia estavel | expansao lenta | militar critico | influencia dentro da curva esperada | risco alto | queda de aldeias por pressao da Horda; tropas gastas em confronto; perda territorial derrubou a base de score |
 

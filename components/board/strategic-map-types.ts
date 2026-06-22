@@ -114,9 +114,11 @@ export type StrategicMapProps = {
   currentDay: number;
   sovereigntyScore: number;
   readOnly?: boolean;
+  worldStarted?: boolean;
 };
 
-export type TileActionKind = "inspect" | "build" | "go" | "attack" | "annex" | "spy" | "explore";
+export type TileActionKind = "build" | "go" | "attack" | "annex" | "explore";
+export type StoredMapCommandAction = TileActionKind | "spy";
 export type ZoomLevel = 1 | 2 | 3 | 4;
 export type ActionStep = "choose" | "configure";
 
@@ -139,7 +141,7 @@ export type MovementRouteStep = {
 };
 
 export type MovementDraft = {
-  action: Exclude<TileActionKind, "inspect">;
+  action: TileActionKind;
   from: AxialCoord;
   to: AxialCoord;
   etaMinutes: number;
@@ -154,8 +156,8 @@ export type StoredMapMovement = {
   worldId: string;
   sourceCoord: string;
   targetCoord: string;
-  movementType: "attack" | "annex" | "support" | "spy" | "transport";
-  commandAction: Exclude<TileActionKind, "inspect" | "explore">;
+  movementType: "attack" | "annex" | "support" | "spy" | "transport" | "scout";
+  commandAction: StoredMapCommandAction;
   launchedAt: string;
   arrivalAt: string;
   etaMinutes: number;

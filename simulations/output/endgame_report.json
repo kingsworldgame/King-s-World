@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-04T20:53:32.892Z",
+  "generatedAt": "2026-06-22T12:35:43.689Z",
   "outputBasename": "season_v2_paired8",
   "summary": {
     "totalRuns": 8,
@@ -15,11 +15,11 @@
       "scenarioId": "metropole-perfect",
       "seed": 90712026,
       "playerId": "H01",
-      "marchStartDay": 115,
-      "etaHours": 72,
+      "marchStartDay": 114,
+      "etaHours": 82.39,
       "eligibleOn90": true,
       "eligibleOn120": true,
-      "arrivalDay": 118,
+      "arrivalDay": 117,
       "enteredPortal": true,
       "failureReason": null,
       "outcomeReason": "Entrou no Portal com 2500 de influencia."
@@ -48,14 +48,14 @@
       "arrivalDay": 118,
       "enteredPortal": true,
       "failureReason": null,
-      "outcomeReason": "Entrou no Portal com 2500 de influencia."
+      "outcomeReason": "Entrou no Portal com 2400 de influencia."
     },
     {
       "scenarioId": "posto-lazy",
       "seed": 90735783,
       "playerId": "H01",
       "marchStartDay": 113,
-      "etaHours": 112.82,
+      "etaHours": 109.69,
       "eligibleOn90": false,
       "eligibleOn120": false,
       "arrivalDay": 118,
