@@ -8,6 +8,7 @@
     "start": "set NEXT_DIST_DIR=.next-build&& next start",
     "android:add": "cap add android",
     "android:sync": "cap sync android",
+    "android:sync:prod": "set CAPACITOR_SERVER_URL=https://king-s-world-three.vercel.app&& cap sync android",
     "android:open": "cap open android",
     "sim:season": "node simulations/simulate-season-v2.mjs",
     "sim:super-world": "node simulations/super-world-report.mjs",
