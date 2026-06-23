@@ -2984,12 +2984,12 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     });
   }, [currentVisionCoordKeys, marchOrigin, microVisionActive, selectedCoordKnown, selectedTile, visitedCoordKeys, world.tiles]);
   return (
-    <section className="space-y-2 bg-black text-slate-100" data-smoke="strategic-map">
-      <article className="overflow-hidden rounded-none border border-white/10 bg-black p-2 shadow-[0_0_70px_rgba(34,211,238,0.08)] sm:rounded-2xl">
+    <section className="space-y-2 bg-black text-slate-100 lg:bg-transparent" data-smoke="strategic-map">
+      <article className="overflow-hidden rounded-none border border-white/10 bg-black p-1 shadow-[0_0_70px_rgba(34,211,238,0.08)] sm:rounded-2xl sm:p-2">
         <div
           ref={viewportRef}
           data-smoke="map-viewport"
-          className="kw-tactical-map relative min-h-[560px] touch-none overflow-hidden rounded-xl border border-cyan-300/12 bg-black"
+          className="kw-tactical-map relative min-h-[560px] touch-none overflow-hidden rounded-xl border border-cyan-300/12 bg-black lg:min-h-[720px]"
           style={{ height: "calc(100vh - 168px - env(safe-area-inset-bottom))" }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
@@ -3394,7 +3394,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
             })}
           </div>
 
-          <div className="pointer-events-none absolute left-14 top-3 z-20 flex max-w-[68%] flex-wrap gap-1.5">
+          <div className="pointer-events-none absolute left-3 right-16 top-3 z-20 flex flex-wrap gap-1.5">
             <span className="rounded-full border border-white/14 bg-black/58 px-2 py-1 text-[10px] font-bold text-slate-100 backdrop-blur">
               Sinais {counts.all}
             </span>
@@ -3409,7 +3409,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
             </span>
           </div>
 
-          <div className="pointer-events-none absolute left-3 top-11 z-20 flex flex-wrap gap-1.5">
+          <div className="pointer-events-none absolute left-3 right-16 top-16 z-20 flex flex-wrap gap-1.5 sm:top-14">
             {[
               { label: "Você", tone: "border-cyan-300/60 bg-cyan-400/16 text-cyan-50" },
               { label: "Tribo", tone: "border-violet-300/60 bg-violet-500/14 text-violet-100" },
@@ -3417,7 +3417,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
               { label: "Inimigo", tone: "border-rose-300/60 bg-rose-500/16 text-rose-100" },
               { label: "Abandonada", tone: "border-amber-300/60 bg-amber-500/14 text-amber-100" },
             ].map((entry) => (
-              <span key={entry.label} className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold backdrop-blur ${entry.tone}`}>
+              <span key={entry.label} className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold shadow-[0_8px_20px_rgba(0,0,0,0.30)] backdrop-blur ${entry.tone}`}>
                 {entry.label}
               </span>
             ))}

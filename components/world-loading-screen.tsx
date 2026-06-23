@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 const LOADING_LINES = [
   "Abrindo os portoes da campanha...",
   "Carregando Imperio, Cidades e Intel...",
-  "Aquecendo mapa e perfil do jogador...",
+  "Preparando a entrada no reino...",
   "Sincronizando Coroa e Supabase...",
   "Preparando acoes do dia...",
   "Organizando relatorios e eventos...",
@@ -95,11 +95,10 @@ export function WorldLoadingScreen({ progress }: { progress?: number }) {
             ))}
           </div>
           <p className="mt-3 text-[10px] font-semibold text-slate-300/90">
-            As telas principais ficam pre-aquecidas para o primeiro toque nao parecer travado.
+            Entrando assim que os dados essenciais do mundo responderem.
           </p>
         </div>
       </div>
     </div>
   );
 }
-

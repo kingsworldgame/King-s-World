@@ -25,8 +25,7 @@ type WorldTab = "empire" | "base" | "board" | "intelligence" | "guide";
 
 const EVOLUTION_MODE_IDS: EvolutionMode[] = ["balanced", "metropole", "vanguard", "bastion", "flow"];
 
-const WORLD_PRELOAD_IMAGES = [
-  "/world/main-map0.png",
+const WORLD_BOOT_IMAGES = [
   "/world/lobby2.png",
   "/icons/nav-empire.png",
   "/icons/nav-cities.png",
@@ -38,39 +37,10 @@ const WORLD_PRELOAD_IMAGES = [
   "/icons/recursos.png",
   "/icons/populacao.png",
   "/icons/exercito.png",
-  "/images/governo.jpg",
-  "/images/producao.jpg",
-  "/images/sociedade.jpg",
-  "/images/quartel.jpg",
-  "/images/muralha.jpg",
-  "/images/help.jpg",
-  "/images/card-council.jpg",
-  "/images/card-expansion.jpg",
-  "/images/card-opportunity.jpg",
-  "/images/day-report.jpg",
-  "/images/battle-report.jpg",
-  "/images/capital.jpg",
-  "/images/metropole.jpg",
-  "/images/cidade.jpg",
-  "/images/king-aurelian.jpg",
-  "/images/king-magnor.jpg",
-  "/images/king-valerius.jpg",
-  "/images/king-orian.jpg",
-  "/images/queen-serenna.jpg",
-  "/images/queen-isolde.jpg",
-  "/images/queen-maelis.jpg",
-  "/images/queen-nyra.jpg",
-  "/images/king-corven.jpg",
-  "/cities/capital-icon.png",
-  "/cities/neutra-icon.png",
-  "/cities/metropole-icon.png",
-  "/cities/bastiao-icon.png",
-  "/cities/celeiro-icon.png",
-  "/cities/postoavancado-icon.png",
 ];
 
-const WORLD_BOOT_MIN_MS = 900;
-const WORLD_BOOT_MAX_MS = 2600;
+const WORLD_BOOT_MIN_MS = 320;
+const WORLD_BOOT_MAX_MS = 1200;
 
 function resolveKingPortraitStyle(kingId: KingProfileId): { backgroundPositionY: string; backgroundSize: string } {
   void kingId;
@@ -354,6 +324,7 @@ export function WorldShell({
       ? segment
       : "base";
   const isReportRoute = segment === "report";
+  const isBoardRoute = activeTab === "board";
   const showCityHeader = activeTab === "base" && !isReportRoute;
   const showGlobalCrownBanner = activeTab === "intelligence";
   const showBottomNavigation = !isReportRoute;
@@ -434,17 +405,6 @@ export function WorldShell({
   const waitingForKingState = !isImperialStateReady && !worldMeta.readOnly;
   const needsKingSelection = isImperialStateReady && isImperialStateHydrated && !imperialState.kingProfileId && !localKingSelection && !worldMeta.readOnly;
   const showWorldChrome = !waitingForKingState && !needsKingSelection;
-  const worldTabHrefs = useMemo(() => {
-    const tabs: WorldTab[] = ["empire", "base", "intelligence", "board", "guide"];
-    return tabs.map((tab) => {
-      const params = new URLSearchParams();
-      params.set("v", activeVillage.id);
-      if (evolutionMode) {
-        params.set("m", evolutionMode);
-      }
-      return `/world/${worldId}/${tab}?${params.toString()}`;
-    });
-  }, [activeVillage.id, evolutionMode, worldId]);
   const campaignEnded = worldMeta.readOnly || crownState.gameOver;
   const endResult = worldMeta.readOnly
     ? worldMeta.result ?? "world_end"
@@ -576,19 +536,16 @@ export function WorldShell({
     };
 
     setProgress(8);
-    const warmRoutes = [...worldTabHrefs, "/profile", "/lobby", "/premium"];
-    warmRoutes.forEach((href) => router.prefetch(href));
     setProgress(18);
     let imagesWarmupDone = false;
-    let routeWarmupDone = false;
     let minElapsed = false;
     const maybeFinish = () => {
       if (cancelled) return;
-      if (imagesWarmupDone && routeWarmupDone && minElapsed && isImperialStateReady) {
+      if (imagesWarmupDone && minElapsed && isImperialStateReady) {
         finish();
       }
     };
-    const imageJobs = WORLD_PRELOAD_IMAGES.map(
+    const imageJobs = WORLD_BOOT_IMAGES.map(
       (src) =>
         new Promise<void>((resolve) => {
           const image = new Image();
@@ -605,21 +562,6 @@ export function WorldShell({
     });
 
     const stageTimer = window.setTimeout(() => setProgress(22), 900);
-    const fetchWarmupTimer = window.setTimeout(() => {
-      const routeJobs = warmRoutes.map((href) =>
-        fetch(href, { method: "GET", credentials: "include" }).catch(() => undefined),
-      );
-      const apiJobs = [
-        fetch("/api/me/profile", { method: "GET", credentials: "include", cache: "no-store" }).catch(() => undefined),
-        fetch(`/api/worlds/${worldId}/imperial-state`, { method: "GET", credentials: "include", cache: "no-store" }).catch(() => undefined),
-      ];
-      void Promise.allSettled([...routeJobs, ...apiJobs]).then(() => {
-        routeWarmupDone = true;
-        setProgress(64);
-        maybeFinish();
-      });
-      setProgress(36);
-    }, 1300);
     const routesTimer = window.setTimeout(() => setProgress(50), 2400);
     const assetsTimer = window.setTimeout(() => setProgress(62), 3600);
     const minTimer = window.setTimeout(() => {
@@ -635,13 +577,12 @@ export function WorldShell({
     return () => {
       cancelled = true;
       window.clearTimeout(stageTimer);
-      window.clearTimeout(fetchWarmupTimer);
       window.clearTimeout(routesTimer);
       window.clearTimeout(assetsTimer);
       window.clearTimeout(minTimer);
       window.clearTimeout(maxTimer);
     };
-  }, [bootReady, isImperialStateReady, needsKingSelection, router, showWorldChrome, waitingForKingState, worldTabHrefs]);
+  }, [bootReady, isImperialStateReady, needsKingSelection, showWorldChrome, waitingForKingState]);
 
   const confirmKingSelection = async () => {
     if (kingSelectionSaving) {
@@ -752,7 +693,7 @@ export function WorldShell({
 
       {showWorldChrome ? (
       <header className="fixed inset-x-0 top-0 z-50 px-3 pt-[calc(env(safe-area-inset-top)+4px)]">
-        <div className="kw-hud-panel relative mx-auto w-full max-w-md rounded-[24px] p-2.5">
+        <div className={`kw-hud-panel relative mx-auto w-full rounded-[24px] p-2.5 ${isBoardRoute ? "max-w-5xl" : "max-w-md"}`}>
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
               <p className="truncate text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">{world.name}</p>
@@ -814,7 +755,9 @@ export function WorldShell({
 
       {showWorldChrome ? (
       <main
-        className={`mx-auto flex min-h-screen w-full max-w-md flex-col px-3 pb-[calc(env(safe-area-inset-bottom)+48px)] ${
+        className={`mx-auto flex min-h-screen w-full flex-col px-3 pb-[calc(env(safe-area-inset-bottom)+48px)] ${
+          isBoardRoute ? "max-w-5xl" : "max-w-md"
+        } ${
           showCityHeader
             ? "pt-[calc(env(safe-area-inset-top)+206px)]"
             : "pt-[calc(env(safe-area-inset-top)+108px)]"
@@ -1191,7 +1134,7 @@ export function WorldShell({
         </div>
       ) : null}
 
-      {((waitingForKingState || (showWorldChrome && !bootReady)) && !bootBypass) && !needsKingSelection ? <WorldLoadingScreen progress={bootProgress} /> : null}
+      {(waitingForKingState && !showWorldChrome && !bootBypass) && !needsKingSelection ? <WorldLoadingScreen progress={bootProgress} /> : null}
 
       {showWorldChrome && showBottomNavigation ? <BottomNavigation worldId={worldId} activeTab={activeTab} villageId={activeVillage.id} evolutionMode={evolutionMode} attention={navAttention} /> : null}
     </div>
