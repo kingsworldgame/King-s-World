@@ -373,6 +373,24 @@ function discoveryAccent(type: ExplorationDiscoveryType): {
   }
 }
 
+function activityToneForDiscovery(type: ExplorationDiscoveryType): "warning" | "danger" | "rare" {
+  if (type === "dragon") return "rare";
+  if (type === "threat") return "danger";
+  return "warning";
+}
+
+function activityBadgeClass(tone: "warning" | "danger" | "rare"): string {
+  if (tone === "rare") return "border-violet-200/70 bg-violet-500/24 text-violet-50";
+  if (tone === "danger") return "border-rose-200/70 bg-rose-500/24 text-rose-50";
+  return "border-amber-200/70 bg-amber-500/22 text-amber-50";
+}
+
+function activityPulseColor(tone: "warning" | "danger" | "rare"): string {
+  if (tone === "rare") return "rgba(168,85,247,0.62)";
+  if (tone === "danger") return "rgba(244,63,94,0.62)";
+  return "rgba(251,191,36,0.58)";
+}
+
 function presetRatio(preset: Exclude<TroopPreset, "custom">): number {
   return preset === "light" ? 0.28 : preset === "heavy" ? 0.78 : 0.52;
 }
@@ -1661,6 +1679,89 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     return keys;
   }, [focusCoordKey, marchOrigin, navigatorActive, routeClock, storedMovements, tileByCoordKey, visitedCoordKeys, world.tiles]);
 
+  const suspiciousActivityCards = useMemo(() => {
+    const cards: Array<{
+      coordKey: string;
+      tone: "warning" | "danger" | "rare";
+      eyebrow: string;
+      title: string;
+      summary: string;
+      cta: string;
+      priority: number;
+    }> = [];
+
+    for (const discovery of Object.values(imperialState.discoveriesByCoord ?? {})) {
+      if (discovery.status !== "new" || discovery.type === "empty") {
+        continue;
+      }
+      cards.push({
+        coordKey: normalizeMovementCoordKey(discovery.coordKey),
+        tone: activityToneForDiscovery(discovery.type),
+        eyebrow: discovery.riskLabel,
+        title: discovery.title,
+        summary: discovery.summary,
+        cta: discovery.actionLabel,
+        priority: discovery.type === "dragon" ? 110 : discovery.type === "threat" ? 96 : discovery.type === "ruins" ? 78 : 68,
+      });
+    }
+
+    for (const route of activeMovementRoutes) {
+      const targetKey = route.routeKeys[route.routeKeys.length - 1];
+      if (!targetKey) {
+        continue;
+      }
+      cards.push({
+        coordKey: targetKey,
+        tone: route.commandAction === "attack" ? "danger" : "warning",
+        eyebrow: route.label,
+        title: route.commandAction === "explore" ? "Exploração em andamento" : "Operação em marcha",
+        summary: `${route.targetLabel} · ETA ${formatMinutesLabel(route.remainingMinutes)}. A rota está revelando passagem e pode gerar acontecimento.`,
+        cta: "Acompanhar rota",
+        priority: route.commandAction === "attack" ? 88 : 74,
+      });
+    }
+
+    for (const site of mappedSites) {
+      if (site.faction !== "enemy" || (!currentVisionCoordKeys.has(site.coordKey) && !visitedCoordKeys.has(site.coordKey))) {
+        continue;
+      }
+      cards.push({
+        coordKey: site.coordKey,
+        tone: "danger",
+        eyebrow: "Atividade hostil",
+        title: site.name,
+        summary: "Cidade rival dentro da área conhecida. Isso é alvo político/militar, não enfeite de mapa.",
+        cta: "Avaliar alvo",
+        priority: 82,
+      });
+    }
+
+    const seen = new Set<string>();
+    return cards
+      .sort((left, right) => right.priority - left.priority)
+      .filter((card) => {
+        const key = `${card.coordKey}:${card.title}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, 4);
+  }, [activeMovementRoutes, currentVisionCoordKeys, imperialState.discoveriesByCoord, mappedSites, visitedCoordKeys]);
+
+  const suspiciousActivityByCoord = useMemo(() => {
+    const entries = new Map<string, { tone: "warning" | "danger" | "rare"; label: string; summary: string }>();
+    for (const card of suspiciousActivityCards) {
+      if (!entries.has(card.coordKey)) {
+        entries.set(card.coordKey, {
+          tone: card.tone,
+          label: card.eyebrow,
+          summary: card.summary,
+        });
+      }
+    }
+    return entries;
+  }, [suspiciousActivityCards]);
+
   const strategicNodes = useMemo<StrategicNode[]>(() => {
     const candidates = new Set<string>();
     const selectedFocusTile = focusCoordKey ? tileByCoordKey.get(focusCoordKey) : null;
@@ -1681,6 +1782,9 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     }
     for (const hotspot of hotspots) {
       candidates.add(hotspot.coordKey);
+    }
+    for (const coordKey of suspiciousActivityByCoord.keys()) {
+      candidates.add(coordKey);
     }
 
     const pathToCenter = marchOrigin ? hexLine(marchOrigin, ZERO_AXIAL) : [];
@@ -1703,11 +1807,12 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     }
 
     const scored = Array.from(candidates)
-      .map((coordKey) => {
+      .map((coordKey): StrategicNode | null => {
         const tile = tileByCoordKey.get(coordKey);
         if (!tile) return null;
         const site = siteByCoordKey.get(coordKey) ?? null;
         const hotspot = hotspotByCoordKey.get(coordKey) ?? null;
+        const suspiciousActivity = suspiciousActivityByCoord.get(coordKey);
         const connected = roadNetwork.nodes.has(coordKey);
         const enemy = site?.faction === "enemy";
         const owned = site?.faction === "self";
@@ -1731,7 +1836,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
             entry.faction === "enemy" &&
             axialDistance({ q: tile.q, r: tile.r }, { q: entry.q, r: entry.r }) <= (navigatorActive ? 2 : 1),
         );
-        const pressured = hasRouteActivity || (connected && nearbyEnemy) || Boolean(site?.state?.match(/risco|press|horda|combate|ataque/i));
+        const pressured = Boolean(suspiciousActivity) || hasRouteActivity || (connected && nearbyEnemy) || Boolean(site?.state?.match(/risco|press|horda|combate|ataque/i));
 
         let state: StrategicNodeState = "unknown";
         if (enemy) {
@@ -1782,6 +1887,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
           (coordKey === marchOriginKey ? 140 : 0) +
           (tile.isCentralThrone ? 120 : 0) +
           (site ? 95 : 0) +
+          (suspiciousActivity ? 72 : 0) +
           (hotspot ? 66 : 0) +
           (pressured ? 54 : 0) +
           (hasRouteActivity ? 40 : 0) +
@@ -1810,6 +1916,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
           isPressured: pressured,
           isDiscovered: discovered,
           hasRouteActivity,
+          suspiciousActivity,
           distance: Math.max(0, route.length - 1),
           etaMinutes: route.length > 1 ? etaMinutes : null,
           score,
@@ -1820,7 +1927,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
 
     const visibleLimit = zoom < MACRO_VISION_THRESHOLD ? 48 : zoom < 1.8 ? 24 : 18;
     const scoped = zoom >= MICRO_VISION_THRESHOLD
-      ? scored.filter((entry) => entry.isSelected || entry.isFocus || entry.isCenter || entry.distance <= 2 || entry.isOwned || entry.hasRouteActivity)
+      ? scored.filter((entry) => entry.isSelected || entry.isFocus || entry.isCenter || entry.distance <= 2 || entry.isOwned || entry.hasRouteActivity || Boolean(entry.suspiciousActivity))
       : scored;
     const chosen = scoped.slice(0, visibleLimit);
     const visibleKeys = new Set(chosen.map((node) => node.coordKey));
@@ -1850,6 +1957,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
     siteByCoordKey,
     hotspotByCoordKey,
     storedMovements,
+    suspiciousActivityByCoord,
     tileByCoordKey,
     zoom,
   ]);
@@ -2959,6 +3067,13 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
         .slice(0, 3),
     [imperialState.discoveriesByCoord],
   );
+  const radarActivityCards = useMemo(
+    () =>
+      suspiciousActivityCards
+        .filter((card) => !mapEventCards.some((event) => normalizeMovementCoordKey(event.coordKey) === card.coordKey && event.title === card.title))
+        .slice(0, 2),
+    [mapEventCards, suspiciousActivityCards],
+  );
   const detailModeActive = zoom >= DETAIL_ZOOM_THRESHOLD;
   const macroVisionActive = zoom < MACRO_VISION_THRESHOLD;
   const microVisionActive = zoom >= MICRO_VISION_THRESHOLD;
@@ -3334,7 +3449,7 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                     <span
                       className="pointer-events-none absolute left-1/2 top-1/2 h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full animate-ping"
                       style={{
-                        background: `radial-gradient(circle, ${tone.pulse} 0%, rgba(15,23,42,0) 68%)`,
+                        background: `radial-gradient(circle, ${node.suspiciousActivity ? activityPulseColor(node.suspiciousActivity.tone) : tone.pulse} 0%, rgba(15,23,42,0) 68%)`,
                       }}
                     />
                   ) : null}
@@ -3372,7 +3487,14 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                       macroVisionActive ? "" : icon
                     )}
                   </div>
-                  {macroVisionActive && (node.isPressured || node.hasRouteActivity || node.isEnemy || node.hotspot || node.isCenter) ? (
+                  {node.suspiciousActivity ? (
+                    <span
+                      className={`pointer-events-none absolute -right-2 -top-2 z-20 grid h-5 w-5 place-items-center rounded-full border text-[10px] font-black shadow-[0_0_22px_rgba(0,0,0,0.45)] ${activityBadgeClass(node.suspiciousActivity.tone)}`}
+                      title={`${node.suspiciousActivity.label}: ${node.suspiciousActivity.summary}`}
+                    >
+                      !
+                    </span>
+                  ) : macroVisionActive && (node.isPressured || node.hasRouteActivity || node.isEnemy || node.hotspot || node.isCenter) ? (
                     <span className="pointer-events-none absolute -right-1 -top-1 grid h-3 w-3 place-items-center rounded-full border border-cyan-300/30 bg-black text-[8px] text-cyan-100">
                       {node.isEnemy ? "!" : node.hotspot ? "*" : node.isCenter ? "O" : "^"}
                     </span>
@@ -3397,6 +3519,13 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
           <div className="pointer-events-none absolute left-3 right-16 top-3 z-20 flex flex-wrap gap-1.5">
             <span className="rounded-full border border-white/14 bg-black/58 px-2 py-1 text-[10px] font-bold text-slate-100 backdrop-blur">
               Sinais {counts.all}
+            </span>
+            <span className={`rounded-full border px-2 py-1 text-[10px] font-bold backdrop-blur ${
+              suspiciousActivityCards.length > 0
+                ? "border-amber-300/55 bg-amber-500/18 text-amber-50"
+                : "border-white/10 bg-black/45 text-slate-300"
+            }`}>
+              Atividade {suspiciousActivityCards.length}
             </span>
             <span className="rounded-full border border-cyan-300/40 bg-cyan-400/16 px-2 py-1 text-[10px] font-bold text-cyan-50 backdrop-blur">
               Suas {counts.self}
@@ -3470,6 +3599,68 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
                   </button>
                 );
               })}
+            </div>
+          ) : null}
+
+          {radarActivityCards.length > 0 ? (
+            <div
+              data-smoke="map-activity-radar"
+              className="pointer-events-none absolute inset-x-3 bottom-[6.2rem] z-20 flex flex-col gap-2 sm:left-auto sm:w-80"
+            >
+              {radarActivityCards.map((card) => {
+                const coord = parseLegacyCoord(card.coordKey);
+                return (
+                  <button
+                    key={`${card.coordKey}-${card.title}`}
+                    type="button"
+                    data-map-hud="true"
+                    onPointerDown={swallowHudPointer}
+                    onPointerUp={swallowHudPointer}
+                    onClick={(event) => {
+                      swallowHudClick(event);
+                      setSelectedCoordKey(card.coordKey);
+                      setInspectedCoordKey(card.coordKey);
+                      setDetailOpen(true);
+                      emitUiFeedback("open", "medium");
+                    }}
+                    className="pointer-events-auto overflow-hidden rounded-2xl border border-white/12 bg-slate-950/88 p-2.5 text-left shadow-[0_18px_48px_rgba(0,0,0,0.44)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-amber-200/45"
+                  >
+                    <div className="flex items-start gap-2">
+                      <span className={`mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full border text-[11px] font-black ${activityBadgeClass(card.tone)}`}>
+                        !
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="truncate text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">{card.eyebrow}</p>
+                          <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[9px] font-bold text-slate-300">
+                            {coord.q}:{coord.r}
+                          </span>
+                        </div>
+                        <p className="mt-0.5 truncate text-xs font-black text-slate-50">{card.title}</p>
+                        <p className="mt-1 line-clamp-2 text-[10px] font-semibold leading-4 text-slate-300">{card.summary}</p>
+                        <p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-amber-100">{card.cta}</p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : mapEventCards.length <= 0 ? (
+            <div
+              data-smoke="map-activity-radar-empty"
+              className="pointer-events-none absolute inset-x-3 bottom-[6.2rem] z-20 rounded-2xl border border-white/10 bg-slate-950/72 px-3 py-2 shadow-[0_16px_38px_rgba(0,0,0,0.34)] backdrop-blur-xl sm:left-auto sm:w-80"
+            >
+              <div className="flex items-center gap-2">
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-cyan-200/35 bg-cyan-500/12 text-[10px] font-black text-cyan-50">
+                  0
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">Radar silencioso</p>
+                  <p className="mt-0.5 text-[11px] font-semibold leading-4 text-slate-200">
+                    Sem sinais recentes. Explorar área é o jeito de puxar acontecimento novo para o mapa.
+                  </p>
+                </div>
+              </div>
             </div>
           ) : null}
 

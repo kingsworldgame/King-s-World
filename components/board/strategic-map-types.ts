@@ -90,6 +90,11 @@ export type StrategicNode = {
   isPressured: boolean;
   isDiscovered: boolean;
   hasRouteActivity: boolean;
+  suspiciousActivity?: {
+    tone: "warning" | "danger" | "rare";
+    label: string;
+    summary: string;
+  };
   distance: number;
   etaMinutes: number | null;
   score: number;
