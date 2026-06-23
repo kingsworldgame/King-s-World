@@ -1694,28 +1694,40 @@ export function StrategicMap({ worldId, tribeName, sites, villages, currentDay: 
       if (discovery.status !== "new" || discovery.type === "empty") {
         continue;
       }
+      const discoveryCoordKey = normalizeMovementCoordKey(discovery.coordKey);
+      if (!currentVisionCoordKeys.has(discoveryCoordKey) && !visitedCoordKeys.has(discoveryCoordKey)) {
+        continue;
+      }
+      const fullyKnown = visitedCoordKeys.has(discoveryCoordKey);
       cards.push({
-        coordKey: normalizeMovementCoordKey(discovery.coordKey),
-        tone: activityToneForDiscovery(discovery.type),
-        eyebrow: discovery.riskLabel,
-        title: discovery.title,
-        summary: discovery.summary,
-        cta: discovery.actionLabel,
-        priority: discovery.type === "dragon" ? 110 : discovery.type === "threat" ? 96 : discovery.type === "ruins" ? 78 : 68,
+        coordKey: discoveryCoordKey,
+        tone: fullyKnown ? activityToneForDiscovery(discovery.type) : "warning",
+        eyebrow: fullyKnown ? discovery.riskLabel : "Sinal fraco",
+        title: fullyKnown ? discovery.title : "Atividade suspeita",
+        summary: fullyKnown
+          ? discovery.summary
+          : "Batedores captaram movimento ou marca no terreno, mas ainda não sabem o que existe ali. A exploração precisa chegar mais perto.",
+        cta: fullyKnown ? discovery.actionLabel : "Investigar área",
+        priority: fullyKnown
+          ? discovery.type === "dragon" ? 110 : discovery.type === "threat" ? 96 : discovery.type === "ruins" ? 78 : 68
+          : 64,
       });
     }
 
     for (const route of activeMovementRoutes) {
-      const targetKey = route.routeKeys[route.routeKeys.length - 1];
-      if (!targetKey) {
+      const latestVisibleKey =
+        route.revealedKeys[route.revealedKeys.length - 1] ??
+        route.passedKeys[route.passedKeys.length - 1] ??
+        route.routeKeys[0];
+      if (!latestVisibleKey) {
         continue;
       }
       cards.push({
-        coordKey: targetKey,
+        coordKey: latestVisibleKey,
         tone: route.commandAction === "attack" ? "danger" : "warning",
         eyebrow: route.label,
         title: route.commandAction === "explore" ? "Exploração em andamento" : "Operação em marcha",
-        summary: `${route.targetLabel} · ETA ${formatMinutesLabel(route.remainingMinutes)}. A rota está revelando passagem e pode gerar acontecimento.`,
+        summary: `${route.targetLabel} · ETA ${formatMinutesLabel(route.remainingMinutes)}. O radar acompanha só o trecho já visto da marcha.`,
         cta: "Acompanhar rota",
         priority: route.commandAction === "attack" ? 88 : 74,
       });
